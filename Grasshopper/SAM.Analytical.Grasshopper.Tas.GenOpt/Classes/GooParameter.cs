@@ -1,34 +1,34 @@
 ﻿using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
-using SAM.Analytical.Grasshopper.Tas.OptGen.Properties;
-using SAM.Analytical.Tas.OptGen;
+using SAM.Analytical.Grasshopper.Tas.GenOpt.Properties;
+using SAM.Analytical.Tas.GenOpt;
 using System;
 using System.Collections.Generic;
 
-namespace SAM.Analytical.Grasshopper.Tas.OptGen
+namespace SAM.Analytical.Grasshopper.Tas.GenOpt
 {
-    public class GooAlgorithm : GH_Goo<IAlgorithm>
+    public class GooParameter : GH_Goo<IParameter>
     {
         public override bool IsValid => Value != null;
 
 
-        public GooAlgorithm()
+        public GooParameter()
             :base()
         {
 
         }
 
-        public GooAlgorithm(IAlgorithm algorithm)
+        public GooParameter(IParameter parameter)
             :base()
         {
-            Value = algorithm;
+            Value = parameter;
         }
         
         public override string TypeName
         {
             get
             {
-                return Value != null ? Value.GetType().FullName : typeof(Algorithm).FullName;
+                return Value != null ? Value.GetType().FullName : typeof(Parameter).FullName;
             }
         }
 
@@ -36,18 +36,18 @@ namespace SAM.Analytical.Grasshopper.Tas.OptGen
         {
             get
             {
-                return typeof(Algorithm).FullName.Replace(".", " ");
+                return typeof(Parameter).FullName.Replace(".", " ");
             }
         }
 
         public override IGH_Goo Duplicate()
         {
-            return new GooAlgorithm(Value);
+            return new GooParameter(Value);
         }
 
         public override string ToString()
         {
-            return typeof(Algorithm).Name;
+            return typeof(Parameter).Name;
         }
 
         public override bool CastFrom(object source)
@@ -72,23 +72,23 @@ namespace SAM.Analytical.Grasshopper.Tas.OptGen
         }
     }
 
-    public class GooAlgorithmParam : GH_PersistentParam<GooAlgorithm>
+    public class GooParameterParam : GH_PersistentParam<GooParameter>
     {
-        public override Guid ComponentGuid => new Guid("c2afb89d-f839-4c80-a50c-fe9be3ebfb16");
+        public override Guid ComponentGuid => new Guid("6f222653-57cb-437c-80fe-b5ba318a4183");
 
         protected override System.Drawing.Bitmap Icon => Resources.SAM_TasT3D;
 
-        public GooAlgorithmParam()
-            : base(typeof(Algorithm).Name, typeof(Algorithm).Name, typeof(Algorithm).FullName.Replace(".", " "), "Params", "SAM")
+        public GooParameterParam()
+            : base(typeof(Parameter).Name, typeof(Parameter).Name, typeof(Parameter).FullName.Replace(".", " "), "Params", "SAM")
         {
         }
 
-        protected override GH_GetterResult Prompt_Plural(ref List<GooAlgorithm> values)
+        protected override GH_GetterResult Prompt_Plural(ref List<GooParameter> values)
         {
             throw new NotImplementedException();
         }
 
-        protected override GH_GetterResult Prompt_Singular(ref GooAlgorithm value)
+        protected override GH_GetterResult Prompt_Singular(ref GooParameter value)
         {
             throw new NotImplementedException();
         }

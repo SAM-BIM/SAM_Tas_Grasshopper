@@ -1,9 +1,9 @@
 ﻿using Grasshopper.Kernel;
 using Grasshopper;
 
-using SAM.Analytical.Grasshopper.Tas.OptGen.Properties;
+using SAM.Analytical.Grasshopper.Tas.GenOpt.Properties;
 
-namespace SAM.Analytical.Grasshopper.Tas.OptGen
+namespace SAM.Analytical.Grasshopper.Tas.GenOpt
 {
     public class AssemblyPriority : GH_AssemblyPriority
     {

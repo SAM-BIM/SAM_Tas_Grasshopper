@@ -2,7 +2,7 @@
 using System.Drawing;
 using Grasshopper.Kernel;
 
-namespace SAM.Analytical.Grasshopper.Tas.OptGen
+namespace SAM.Analytical.Grasshopper.Tas.GenOpt
 {
     public class AssemblyInfo : GH_AssemblyInfo
     {
@@ -26,7 +26,7 @@ namespace SAM.Analytical.Grasshopper.Tas.OptGen
             get
             {
                 //Return a short string describing the purpose of this GHA library.
-                return "SAM Tas OptGen Toolkit";
+                return "SAM Tas GenOpt Toolkit";
             }
         }
         public override Guid Id

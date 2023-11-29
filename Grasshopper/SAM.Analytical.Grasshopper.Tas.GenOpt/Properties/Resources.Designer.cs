@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace SAM.Analytical.Grasshopper.Tas.OptGen.Properties {
+namespace SAM.Analytical.Grasshopper.Tas.GenOpt.Properties {
     using System;
     
     
@@ -39,7 +39,7 @@ namespace SAM.Analytical.Grasshopper.Tas.OptGen.Properties {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("SAM.Analytical.Grasshopper.Tas.OptGen.Properties.Resources", typeof(Resources).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("SAM.Analytical.Grasshopper.Tas.GenOpt.Properties.Resources", typeof(Resources).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -83,9 +83,9 @@ namespace SAM.Analytical.Grasshopper.Tas.OptGen.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap SAM_OptGen {
+        internal static System.Drawing.Bitmap SAM_GenOpt {
             get {
-                object obj = ResourceManager.GetObject("SAM_OptGen", resourceCulture);
+                object obj = ResourceManager.GetObject("SAM_GenOpt", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

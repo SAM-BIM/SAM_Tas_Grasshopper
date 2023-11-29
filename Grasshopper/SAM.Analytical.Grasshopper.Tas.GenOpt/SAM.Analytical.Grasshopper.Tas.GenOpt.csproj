@@ -7,8 +7,8 @@
     <ProjectGuid>{FFF18B3E-2C47-4557-9BD9-9E888AA82180}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>SAM.Analytical.Grasshopper.Tas.OptGen</RootNamespace>
-    <AssemblyName>SAM.Analytical.Grasshopper.Tas.OptGen</AssemblyName>
+    <RootNamespace>SAM.Analytical.Grasshopper.Tas.GenOpt</RootNamespace>
+    <AssemblyName>SAM.Analytical.Grasshopper.Tas.GenOpt</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
@@ -23,7 +23,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>..\..\build\SAM.Analytical.Grasshopper.Tas.OptGen.xml</DocumentationFile>
+    <DocumentationFile>..\..\build\SAM.Analytical.Grasshopper.Tas.GenOpt.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -68,7 +68,7 @@
   <ItemGroup>
     <Compile Include="Classes\GooParameter.cs" />
     <Compile Include="Classes\GooAlgorithm.cs" />
-    <Compile Include="Component\SAMAnalyticalOptGen.cs" />
+    <Compile Include="Component\SAMAnalyticalGenOpt.cs" />
     <Compile Include="Kernel\AssemblyInfo.cs" />
     <Compile Include="Kernel\AssemblyPriority.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -82,6 +82,7 @@
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
@@ -131,13 +132,13 @@
     <None Include="Resources\SAM_TasTWD.png" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\SAM_Tas\SAM.Analytical.Tas.OptGen\SAM.Analytical.Tas.OptGen.csproj">
+    <ProjectReference Include="..\..\SAM_Tas\SAM.Analytical.Tas.GenOpt\SAM.Analytical.Tas.GenOpt.csproj">
       <Project>{c586179c-2d45-43fc-bdd9-bc4a8d85ec7d}</Project>
-      <Name>SAM.Analytical.Tas.OptGen</Name>
+      <Name>SAM.Analytical.Tas.GenOpt</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\SAM_OptGen.png" />
+    <None Include="Resources\SAM_GenOpt.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

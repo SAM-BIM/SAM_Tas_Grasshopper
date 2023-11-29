@@ -1,14 +1,14 @@
 ﻿using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
-using SAM.Analytical.Grasshopper.Tas.OptGen.Properties;
-using SAM.Analytical.Tas.OptGen;
+using SAM.Analytical.Grasshopper.Tas.GenOpt.Properties;
+using SAM.Analytical.Tas.GenOpt;
 using SAM.Core.Grasshopper;
 using System;
 using System.Collections.Generic;
 
-namespace SAM.Analytical.Grasshopper.Tas.OptGen
+namespace SAM.Analytical.Grasshopper.Tas.GenOpt
 {
-    public class SAMAnalyticalOptGen : GH_SAMVariableOutputParameterComponent
+    public class SAMAnalyticalGenOpt : GH_SAMVariableOutputParameterComponent
     {
         /// <summary>
         /// Gets the unique ID for this component. Do not change this ID after release.
@@ -23,7 +23,7 @@ namespace SAM.Analytical.Grasshopper.Tas.OptGen
         /// <summary>
         /// Provides an Icon for the component.
         /// </summary>
-        protected override System.Drawing.Bitmap Icon => Resources.SAM_OptGen;
+        protected override System.Drawing.Bitmap Icon => Resources.SAM_GenOpt;
 
 
         public override GH_Exposure Exposure => GH_Exposure.tertiary;
@@ -31,9 +31,9 @@ namespace SAM.Analytical.Grasshopper.Tas.OptGen
         /// <summary>
         /// Initializes a new instance of the SAM_point3D class.
         /// </summary>
-        public SAMAnalyticalOptGen()
-          : base("SAMAnalytical.OptGen", "SAMAnalytical.OptGen",
-              "SAM Analytical OptGen",
+        public SAMAnalyticalGenOpt()
+          : base("SAMAnalytical.GenOpt", "SAMAnalytical.GenOpt",
+              "SAM Analytical GenOpt",
               "SAM WIP", "Tas")
         {
         }
@@ -106,12 +106,12 @@ namespace SAM.Analytical.Grasshopper.Tas.OptGen
 
 
 
-            OptGenDocument optGenDocument = new OptGenDocument(System.IO.Path.GetDirectoryName(path));
-            optGenDocument.AddScript(System.IO.File.ReadAllText(path));
-            optGenDocument.AddObjective("DaylightFactor");
-            optGenDocument.AddObjective("Result");
-            optGenDocument.AddParameter("NorthAngle", 0, 0, 360, 12);
-            optGenDocument.Run();
+            GenOptDocument genOptDocument = new GenOptDocument(System.IO.Path.GetDirectoryName(path));
+            genOptDocument.AddScript(System.IO.File.ReadAllText(path));
+            genOptDocument.AddObjective("DaylightFactor");
+            genOptDocument.AddObjective("Result");
+            genOptDocument.AddParameter("NorthAngle", 0, 0, 360, 12);
+            genOptDocument.Run();
 
             if (index_Successful != -1)
             {

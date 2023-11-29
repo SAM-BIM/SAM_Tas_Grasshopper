@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("SAM.Analytical.Grasshopper.Tas.OptGen")]
+[assembly: AssemblyTitle("SAM.Analytical.Grasshopper.Tas.GenOpt")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("SAM.Analytical.Grasshopper.Tas.OptGen")]
+[assembly: AssemblyProduct("SAM.Analytical.Grasshopper.Tas.GenOpt")]
 [assembly: AssemblyCopyright("Copyright ©  2023")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
