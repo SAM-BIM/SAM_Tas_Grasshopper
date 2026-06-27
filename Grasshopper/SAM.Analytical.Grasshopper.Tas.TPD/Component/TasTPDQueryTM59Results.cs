@@ -1,9 +1,11 @@
-// SPDX-License-Identifier: LGPL-3.0-or-later
+﻿// SPDX-License-Identifier: LGPL-3.0-or-later
 // Copyright (c) 2020–2026 Michal Dengusiak & Jakub Ziolkowski and contributors
 
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
-using SAM.Analytical.Grasshopper.Tas.Properties;
+using System.Text.Json.Nodes;
+using SAM.Analytical.Grasshopper.Tas.TPD.Properties;
+using SAM.Analytical.Systems;
 using SAM.Analytical.Tas;
 using SAM.Core;
 using SAM.Core.Grasshopper;
@@ -12,33 +14,35 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
 
-namespace SAM.Analytical.Grasshopper.Tas
+namespace SAM.Analytical.Grasshopper.Tas.TPD
 {
-    public class TasTSDQueryTM59Results : GH_SAMVariableOutputParameterComponent
+    public class TasTPDQueryTM59Results : GH_SAMVariableOutputParameterComponent
     {
         /// <summary>
         /// Gets the unique ID for this component. Do not change this ID after release.
         /// </summary>
-        public override Guid ComponentGuid => new Guid("d9f84a00-275e-401c-9c69-ad30b4ccb403");
+        public override Guid ComponentGuid => new Guid("68f3f8e7-884f-4fe6-832e-da69e30d4fe9");
 
         /// <summary>
         /// The latest version of this component
         /// </summary>
-        public override string LatestComponentVersion => "1.0.7";
+        public override string LatestComponentVersion => "1.0.1";
 
-        public override GH_Exposure Exposure => GH_Exposure.quarternary;
+        public override GH_Exposure Exposure => GH_Exposure.quinary;
 
         /// <summary>
         /// Provides an Icon for the component.
         /// </summary>
-        protected override System.Drawing.Bitmap Icon => Resources.SAM_TasTSD3;
+        protected override System.Drawing.Bitmap Icon => Resources.SAM_TasTPD3;
+
 
         /// <summary>
-        /// Initializes a new instance of the TasTSDQueryTM59Results class.
+        /// Initializes a new instance of the TasTPDQueryTM59Results class.
         /// </summary>
-        public TasTSDQueryTM59Results()
-          : base("Tas.TSDQueryTM59Results", "Tas.TSDQueryTM59Results",
-              "Reads TM59 overheating-criteria results from a TasTSD file for the given space or zone.\nThe assessment covers the summer period (1 May - 30 September). Use Inspect on the output to see the individual criterion outcomes.",
+        public TasTPDQueryTM59Results()
+          : base("Tas.TPDQueryTM59Results", "Tas.TPDQueryTM59Results",
+              "Query TPD for TM59Results" +
+               "this node will query results for summer 01 May to 30 September for a given space or zone and output when inspect results",
               "SAM", "Tas")
         {
         }
@@ -52,7 +56,7 @@ namespace SAM.Analytical.Grasshopper.Tas
             {
                 List<GH_SAMParam> result = [];
                 result.Add(new GH_SAMParam(new GooAnalyticalModelParam() { Name = "_analyticalModel", NickName = "_analyticalModel", Description = "SAM Analytical Model", Access = GH_ParamAccess.item }, ParamVisibility.Binding));
-                result.Add(new GH_SAMParam(new global::Grasshopper.Kernel.Parameters.Param_String() { Name = "_pathTasTSD", NickName = "_pathTasTSD", Description = "A file path to a TasTSD file.", Access = GH_ParamAccess.item }, ParamVisibility.Binding));
+                result.Add(new GH_SAMParam(new global::Grasshopper.Kernel.Parameters.Param_String() { Name = "_pathTasTPD", NickName = "_pathTasTPD", Description = "A file path to a TasTPD file.", Access = GH_ParamAccess.item }, ParamVisibility.Binding));
                 result.Add(new GH_SAMParam(new GooAnalyticalObjectParam() { Name = "_spaces_", NickName = "_spaces_", Description = "SAM Analytical Spaces or Zone", Access = GH_ParamAccess.list, Optional = true }, ParamVisibility.Binding));
 
                 global::Grasshopper.Kernel.Parameters.Param_Boolean boolean;
@@ -126,15 +130,15 @@ namespace SAM.Analytical.Grasshopper.Tas
                 return;
             }
 
-            index = Params.IndexOfInputParam("_pathTasTSD");
+            index = Params.IndexOfInputParam("_pathTasTPD");
             if(index == -1)
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Invalid data");
                 return;
             }
 
-            string path = null;
-            if (!dataAccess.GetData(index, ref path) || string.IsNullOrWhiteSpace(path) || !System.IO.File.Exists(path))
+            string path_TPD = null;
+            if (!dataAccess.GetData(index, ref path_TPD) || string.IsNullOrWhiteSpace(path_TPD) || !System.IO.File.Exists(path_TPD))
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Invalid data");
                 return;
@@ -196,16 +200,24 @@ namespace SAM.Analytical.Grasshopper.Tas
                 }
             }
 
+            List<SystemSpaceResult> systemSpaceResults = Analytical.Tas.TPD.Convert.ToSAM_SpaceSystemResults(path_TPD, out string path_TSD);
+            if(systemSpaceResults is null)
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Invalid data");
+                return;
+            }
+
+
             TSDConversionSettings tSDConversionSettings = new ()
             {
-                SpaceDataTypes = new HashSet<SpaceDataType>() { SpaceDataType.ResultantTemperature, SpaceDataType.OccupantSensibleGain },
+                SpaceDataTypes = new HashSet<Analytical.Tas.SpaceDataType>() { Analytical.Tas.SpaceDataType.MeanRadiantTemperature, Analytical.Tas.SpaceDataType.OccupantSensibleGain },
                 SpaceNames = spaces == null ? null : [.. spaces.ConvertAll(x => x?.Name)],
                 ZoneNames = zones == null ? null : [.. zones.ConvertAll(x => x?.Name)],
                 ConvertWeaterData = true,
                 ConvertZones = true
             };
 
-            AnalyticalModel analyticalModel_TSD = Analytical.Tas.Convert.ToSAM(path, tSDConversionSettings);
+            AnalyticalModel analyticalModel_TSD = Analytical.Tas.Convert.ToSAM(path_TSD, tSDConversionSettings);
             AdjacencyCluster adjacencyCluster_TSD = analyticalModel_TSD?.AdjacencyCluster;
             if(adjacencyCluster_TSD != null)
             {
@@ -226,6 +238,46 @@ namespace SAM.Analytical.Grasshopper.Tas
                         }
 
                         analyticalModel_TSD = new AnalyticalModel(analyticalModel_TSD, adjacencyCluster_TSD);
+                    }
+                }
+            }
+
+            List<Space> spaces_TSD_Temp = analyticalModel_TSD?.GetSpaces();
+            if(spaces_TSD_Temp != null)
+            {
+                foreach (Space space_TSD_Temp in spaces_TSD_Temp)
+                {
+                    SystemSpaceResult systemSpaceResult = systemSpaceResults.Find(x => x.Name == space_TSD_Temp.Name);
+                    if(systemSpaceResult is null)
+                    {
+                        continue;
+                    }
+
+                    string name_MeanRadiantTemperature = Analytical.Tas.SpaceDataType.MeanRadiantTemperature.Text();
+
+                    ParameterSet parameterSet = space_TSD_Temp.GetParameterSets().Find(x => x.Contains(name_MeanRadiantTemperature));
+                    if(parameterSet is not null)
+                    {
+                        JsonArray jArray = parameterSet?.ToObject(name_MeanRadiantTemperature) as JsonArray;
+                        if(jArray != null)
+                        {
+                            IndexedDoubles indexedDoubles = systemSpaceResult[Analytical.Systems.SpaceDataType.ZoneTemperature.ToString()];
+                            if (indexedDoubles is not null)
+                            {
+                                JsonArray jArray_ResultantTemperature = [];
+
+                                List<double> values = indexedDoubles.GetValues(new Range<int>(0, 8760), true);
+                                for (int i = 0; i < jArray.Count; i++)
+                                {
+                                    jArray_ResultantTemperature.Add(((double)jArray[i] + values[i]) / 2);
+                                }
+
+                                parameterSet.Add(Analytical.Tas.SpaceDataType.ResultantTemperature.Text(), jArray_ResultantTemperature);
+
+                                space_TSD_Temp.Add(parameterSet);
+                                analyticalModel_TSD.AddSpace(space_TSD_Temp);
+                            }
+                        }
                     }
                 }
             }
@@ -351,12 +403,12 @@ namespace SAM.Analytical.Grasshopper.Tas
             base.AppendAdditionalMenuItems(menu);
 
             Menu_AppendSeparator(menu);
-            Menu_AppendItem(menu, "Open TSD", Menu_OpenTSD, Resources.SAM_TasTSD3, true, false);
+            Menu_AppendItem(menu, "Open TPD", Menu_OpenTPD, Resources.SAM_TasTPD3, true, false);
         }
 
-        private void Menu_OpenTSD(object sender, EventArgs e)
+        private void Menu_OpenTPD(object sender, EventArgs e)
         {
-            int index_Path = Params.IndexOfInputParam("_pathTasTSD");
+            int index_Path = Params.IndexOfInputParam("_pathTasTPD");
             if (index_Path == -1)
             {
                 return;
