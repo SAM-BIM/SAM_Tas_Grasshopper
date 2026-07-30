@@ -32,11 +32,11 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Interop.TAS3D">
-      <HintPath>..\..\references_buildonly\Interop.TAS3D.dll</HintPath>
+      <HintPath>..\..\..\SAM_Tas\references_buildonly\Interop.TAS3D.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="Interop.TIC">
-      <HintPath>..\..\references_buildonly\Interop.TIC.dll</HintPath>
+      <HintPath>..\..\..\SAM_Tas\references_buildonly\Interop.TIC.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="SAM.Core, Version=1.0.8027.17724, Culture=neutral, processorArchitecture=MSIL">
@@ -45,6 +45,9 @@
     </Reference>
     <Reference Include="SAM.Core.Grasshopper">
       <HintPath>..\..\..\SAM\build\SAM.Core.Grasshopper.dll</HintPath>
+    </Reference>
+    <Reference Include="SAM.Core.Tas">
+      <HintPath>..\..\..\SAM_Tas\build\SAM.Core.Tas.dll</HintPath>
     </Reference>
     <Reference Include="SAM.Geometry">
       <HintPath>..\..\..\SAM\build\SAM.Geometry.dll</HintPath>
@@ -65,9 +68,6 @@
     </COMReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\SAM_Tas\SAM.Core.Tas\SAM.Core.Tas.csproj" />
-  </ItemGroup>
-  <ItemGroup>
     <PackageReference Include="Grasshopper">
       <Version>8.21.25188.17001</Version>
       <ExcludeAssets>runtime</ExcludeAssets>
@@ -85,6 +85,6 @@
     <DocumentationFile>..\..\build\SAM.Core.Grasshopper.Tas.xml</DocumentationFile>
   </PropertyGroup>
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="copy &quot;$(TargetPath)&quot; &quot;$(TargetDir)\$(ProjectName).gha&quot;&#xD;&#xA;&#xD;&#xA;set SAM_DIR=$(APPDATA)\SAM\&#xD;&#xA;if not exist &quot;%25SAM_DIR%25&quot; mkdir &quot;%25SAM_DIR%25&quot;&#xD;&#xA;&#xD;&#xA;copy &quot;$(TargetDir)*.dll&quot; &quot;%25SAM_DIR%25&quot;&#xD;&#xA;copy &quot;%25SAM_DIR%25\$(ProjectName).dll&quot; &quot;%25SAM_DIR%25\$(ProjectName).gha&quot;&#xD;&#xA;&#xD;&#xA;&#xD;&#xA;xcopy &quot;$(SolutionDir)\files\resources&quot; &quot;$(APPDATA)\SAM\resources&quot; /Y/I/E/S&#xD;&#xA;xcopy &quot;$(SolutionDir)\files\resources&quot; &quot;$(USERPROFILE)\Documents\SAM\resources&quot; /Y/D/I/E/S&#xD;&#xA;&#xD;&#xA;&#xD;&#xA;if Exist &quot;$(SolutionDir)\files\Grasshopper\UserObjects&quot; (&#xD;&#xA;xcopy &quot;$(SolutionDir)\files\Grasshopper\UserObjects&quot; &quot;$(APPDATA)\Grasshopper\UserObjects\SAM&quot; /Y /I /E/S&#xD;&#xA;)&#xD;&#xA;&#xD;&#xA;::erase &quot;%25SAM_DIR%25$(ProjectName).dll&quot;&#xD;&#xA;::erase &quot;$(TargetPath)&quot;" />
+    <Exec Command="copy &quot;$(TargetPath)&quot; &quot;$(TargetDir)\$(ProjectName).gha&quot;&#xD;&#xA;&#xD;&#xA;set SAM_DIR=$(APPDATA)\SAM\&#xD;&#xA;if not exist &quot;%25SAM_DIR%25&quot; mkdir &quot;%25SAM_DIR%25&quot;&#xD;&#xA;&#xD;&#xA;copy &quot;$(TargetDir)*.dll&quot; &quot;%25SAM_DIR%25&quot;&#xD;&#xA;copy &quot;%25SAM_DIR%25\$(ProjectName).dll&quot; &quot;%25SAM_DIR%25\$(ProjectName).gha&quot;&#xD;&#xA;&#xD;&#xA;&#xD;&#xA;if Exist &quot;$(SolutionDir)\files\Grasshopper\UserObjects&quot; (&#xD;&#xA;xcopy &quot;$(SolutionDir)\files\Grasshopper\UserObjects&quot; &quot;$(APPDATA)\Grasshopper\UserObjects\SAM&quot; /Y /I /E/S&#xD;&#xA;)&#xD;&#xA;&#xD;&#xA;::erase &quot;%25SAM_DIR%25$(ProjectName).dll&quot;&#xD;&#xA;::erase &quot;$(TargetPath)&quot;" />
   </Target>
 </Project>

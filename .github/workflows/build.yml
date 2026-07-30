@@ -1,0 +1,303 @@
+name: Build (Windows)
+
+on:
+  push:
+    branches: [ "master", "main", "sow/**" ]
+  pull_request:
+    branches: [ "master", "main", "sow/**" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    # Guard: if this workflow ever gets merged upstream (e.g. HoareLea),
+    # it will show as "skipped" there and won't break their CI.
+    if: github.repository_owner == 'SAM-BIM'
+    runs-on: windows-2022
+
+    env:
+      MSBUILDDISABLENODEREUSE: "1"
+      ORG_NAME: "SAM-BIM"
+      REPO_NAME: "SAM_Tas_Grasshopper"
+      NUGET_XMLDOC_MODE: "skip"
+
+    steps:
+      - name: Checkout this repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          path: ${{ env.REPO_NAME }}
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.x"
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Setup NuGet
+        uses: nuget/setup-nuget@v2
+        with:
+          nuget-version: "6.x"
+
+      - name: Compute SAMVersion
+        id: ver
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $headRef = '${{ github.head_ref }}'
+          $baseRef = '${{ github.base_ref }}'
+          $refName = '${{ github.ref_name }}'
+          if ($headRef -match '^sow/\d{4}-Q\d$') {
+            $ref = $headRef
+          } elseif ('${{ github.event_name }}' -eq 'pull_request') {
+            $ref = $baseRef
+          } else {
+            $ref = $refName
+          }
+          # .NET AssemblyVersion components are UInt16 (max 65535). Cap to 60000 for headroom.
+          $run = ${{ github.run_number }} % 60000
+          if ($ref -match 'sow/(\d{4})-Q(\d)') {
+            $v = "$($Matches[1]).$($Matches[2]).$run.0"
+            $src = "branch '$ref'"
+          } else {
+            $now = (Get-Date).ToUniversalTime()
+            $quarter = [int][Math]::Ceiling($now.Month / 3.0)
+            $v = "$($now.Year).$quarter.$run.0"
+            $src = "date $($now.ToString('yyyy-MM-dd')) (ref '$ref' not sow/yyyy-Qx)"
+          }
+          Write-Host "SAMVersion = $v (from $src)"
+          "samversion=$v" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Clone dependency repos (siblings)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $org = '${{ env.ORG_NAME }}'
+
+          # SAM_Tas itself is a dependency here (its build\ output is what the six moved
+          # Grasshopper projects HintPath-reference), never a ProjectReference/solution build.
+          $deps = @(
+            'SAM'
+            'SAM_Psychrometrics'
+            'SAM_Mollier'
+            'SAM_Systems'
+            'SAM_Windows'
+            'SAM_gbXML'
+            'SAM_SolarCalculator'
+            'SAM_Tas'
+          )
+
+          foreach ($r in $deps) {
+            if (Test-Path $r) { continue }
+            $headRef = '${{ github.head_ref }}'
+            $baseRef = '${{ github.base_ref }}'
+            $refName = '${{ github.ref_name }}'
+            $candidates = @()
+            if ($headRef) { $candidates += $headRef }
+            # Current sow branch: base_ref on PR events, ref_name on push events.
+            $sowRef = if ($baseRef -match '^sow/') { $baseRef } elseif ($refName -match '^sow/') { $refName } else { '' }
+            if ($sowRef -and $sowRef -ne $headRef) { $candidates += $sowRef }
+            # Canonical quarter branch (strip suffixes): e.g. sow/2026-Q3. Without this, a push
+            # event on a feature branch off a sow branch (base_ref empty) falls straight through
+            # to the hard fallback below and can miss in-quarter API changes.
+            $canonical = ''
+            foreach ($cref in @($headRef, $baseRef, $refName)) {
+              if ($cref -match 'sow/(\d{4})-Q(\d)') { $canonical = "sow/$($Matches[1])-Q$($Matches[2])"; break }
+            }
+            if ($canonical -and $candidates -notcontains $canonical) { $candidates += $canonical }
+            # Hard fallbacks to the active quarter branches (in priority order).
+            foreach ($fb in @('sow/2026-Q3', 'sow/2026-Q2')) {
+              if ($candidates -notcontains $fb) { $candidates += $fb }
+            }
+            $url = "https://github.com/$org/$r.git"
+            $cloned = $false
+            foreach ($cand in $candidates) {
+              $has = (git ls-remote --heads $url $cand 2>$null | Out-String).Trim()
+              if ($has) {
+                Write-Host "Cloning $org/$r @ $cand"
+                git clone --depth 1 --branch $cand $url $r
+                if ($LASTEXITCODE -ne 0) { throw "Failed to clone $r @ $cand" }
+                $cloned = $true
+                break
+              }
+            }
+            if (-not $cloned) {
+              Write-Host "Cloning $org/$r @ default branch"
+              git clone --depth 1 $url $r
+            }
+          }
+
+          # Ensure ReferencePath exists even before SAM_Windows builds
+          New-Item -ItemType Directory -Force -Path "SAM_Windows\build" | Out-Null
+
+      - name: Restore + Rebuild dependency solutions (SAM, SAM_Windows, etc.)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $windowsRef = (Resolve-Path 'SAM_Windows\build').Path
+
+          # IMPORTANT: keep these as an ARRAY of args (do NOT join into one string)
+          $common = @(
+            '/m:1'
+            '/nr:false'
+            '/v:m'
+            '/p:Configuration=Release'
+            '/p:UseSharedCompilation=false'
+            '/p:SAMVersion=${{ steps.ver.outputs.samversion }}'
+            "/p:ReferencePath=$windowsRef"
+          )
+
+          $solutions = @(
+            'SAM\SAM.sln'
+            'SAM_Psychrometrics\SAM_Psychrometrics.sln'
+            'SAM_Mollier\SAM_Mollier.sln'
+            'SAM_Systems\SAM_Systems.sln'
+            'SAM_Windows\SAM_Windows.sln'
+            'SAM_gbXML\SAM_gbXML.sln'
+            'SAM_SolarCalculator\SAM_SolarCalculator.sln'
+          )
+
+          foreach ($sln in $solutions) {
+            if (-not (Test-Path $sln)) { throw "Missing solution: $sln" }
+            Write-Host "==> Restore: $sln"
+            & msbuild $sln /t:Restore @common
+            if ($LASTEXITCODE -ne 0) { throw "MSBuild restore failed: $sln" }
+          }
+
+          foreach ($sln in $solutions) {
+            Write-Host "==> Rebuild: $sln"
+            & msbuild $sln /t:Rebuild @common
+            if ($LASTEXITCODE -ne 0) { throw "MSBuild rebuild failed: $sln" }
+          }
+
+      - name: Build the nine SAM_Tas engine projects directly (never SAM_Tas.sln)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $windowsRef = (Resolve-Path 'SAM_Windows\build').Path
+          $common = @(
+            '/m:1'
+            '/nr:false'
+            '/v:m'
+            '/p:Configuration=Release'
+            '/p:UseSharedCompilation=false'
+            '/p:RunPostBuildEvent=OnOutputUpdated'
+            '/p:SAMVersion=${{ steps.ver.outputs.samversion }}'
+            "/p:ReferencePath=$windowsRef"
+          )
+
+          # Repo-relative path inside SAM_Tas is "SAM_Tas\<Project>\..." (an inner SAM_Tas\ folder
+          # mirrors the .sln's engine solution folder) - combined with the sibling clone directory
+          # also named SAM_Tas, the full CI-workspace path doubles the segment. Verified against the
+          # actual checkout, not assumed - a documented trap in this repo (do not "fix" this to a
+          # single SAM_Tas\ segment without re-checking the real layout).
+          $engineProjects = @(
+            'SAM_Tas\SAM_Tas\SAM.Core.Tas\SAM.Core.Tas.csproj'
+            'SAM_Tas\SAM_Tas\SAM.Geometry.Tas\SAM.Geometry.Tas.csproj'
+            'SAM_Tas\SAM_Tas\SAM.Core.Tas.UKBR\SAM.Core.Tas.UKBR.csproj'
+            'SAM_Tas\SAM_Tas\SAM.Weather.Tas\SAM.Weather.Tas.csproj'
+            'SAM_Tas\SAM_Tas\SAM.Analytical.Tas\SAM.Analytical.Tas.csproj'
+            'SAM_Tas\SAM_Tas\SAM.Analytical.Tas.TM59\SAM.Analytical.Tas.TM59.csproj'
+            'SAM_Tas\SAM_Tas\SAM.Analytical.Tas.SAP\SAM.Analytical.Tas.SAP.csproj'
+            'SAM_Tas\SAM_Tas\SAM.Analytical.Tas.TPD\SAM.Analytical.Tas.TPD.csproj'
+            'SAM_Tas\SAM_Tas\SAM.Analytical.Tas.GenOpt\SAM.Analytical.Tas.GenOpt.csproj'
+          )
+
+          foreach ($proj in $engineProjects) {
+            if (-not (Test-Path $proj)) { throw "Missing engine project: $proj" }
+            Write-Host "==> Restore: $proj"
+            & msbuild $proj /t:Restore @common
+            if ($LASTEXITCODE -ne 0) { throw "MSBuild restore failed: $proj" }
+          }
+
+          foreach ($proj in $engineProjects) {
+            Write-Host "==> Build: $proj"
+            & msbuild $proj /t:Build @common
+            if ($LASTEXITCODE -ne 0) { throw "MSBuild build failed: $proj" }
+          }
+
+      - name: Restore + Build SAM_Tas_Grasshopper.sln
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $windowsRef = (Resolve-Path 'SAM_Windows\build').Path
+          $sln = Join-Path '${{ env.REPO_NAME }}' 'SAM_Tas_Grasshopper.sln'
+
+          $common = @(
+            '/m:1'
+            '/nr:false'
+            '/v:m'
+            '/p:Configuration=Release'
+            '/p:UseSharedCompilation=false'
+            '/p:RunPostBuildEvent=OnOutputUpdated'
+            '/p:SAMVersion=${{ steps.ver.outputs.samversion }}'
+            "/p:ReferencePath=$windowsRef"
+          )
+
+          Write-Host "==> Restore: $sln"
+          & msbuild $sln /t:Restore @common
+          if ($LASTEXITCODE -ne 0) { throw "MSBuild restore failed: $sln" }
+
+          Write-Host "==> Rebuild: $sln"
+          & msbuild $sln /t:Rebuild @common
+          if ($LASTEXITCODE -ne 0) { throw "MSBuild rebuild failed: $sln" }
+
+      - name: Assert six DLL and GHA outputs exist
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $names = @(
+            'SAM.Core.Grasshopper.Tas'
+            'SAM.Analytical.Grasshopper.Tas'
+            'SAM.Weather.Grasshopper.Tas'
+            'SAM.Core.Grasshopper.Tas.UKBR'
+            'SAM.Analytical.Grasshopper.Tas.GenOpt'
+            'SAM.Analytical.Grasshopper.Tas.TPD'
+          )
+
+          $buildDir = Join-Path '${{ env.REPO_NAME }}' 'build'
+          $missing = @()
+          foreach ($name in $names) {
+            $dll = Join-Path $buildDir "$name.dll"
+            $gha = Join-Path $buildDir "$name.gha"
+            if (-not (Test-Path $dll)) { $missing += $dll }
+            if (-not (Test-Path $gha)) { $missing += $gha }
+          }
+          if ($missing.Count -gt 0) {
+            Write-Host "Missing expected outputs:"
+            $missing | ForEach-Object { Write-Host " - $_" }
+            throw "One or more of the six expected DLL/GHA outputs is missing."
+          }
+          Write-Host "All six DLL and GHA outputs present in $buildDir."
+
+      - name: Assert no SAM_UI directory or SAM.Core.UI.WPF.dll anywhere in the job workspace
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          if (Test-Path 'SAM_UI') {
+            throw "A SAM_UI directory exists in the job workspace - this repo must never clone or depend on SAM_UI."
+          }
+
+          $hit = Get-ChildItem -Path . -Recurse -Filter 'SAM.Core.UI.WPF.dll' -ErrorAction SilentlyContinue
+          if ($hit) {
+            Write-Host "Found SAM.Core.UI.WPF.dll at:"
+            $hit | ForEach-Object { Write-Host " - $($_.FullName)" }
+            throw "SAM.Core.UI.WPF.dll must not exist anywhere in this job's workspace."
+          }
+
+          Write-Host "Confirmed: no SAM_UI directory, no SAM.Core.UI.WPF.dll anywhere in the workspace."
+
+      - name: Upload build folders (optional)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.REPO_NAME }}-build-folders
+          path: |
+            **\build\*
+          if-no-files-found: warn

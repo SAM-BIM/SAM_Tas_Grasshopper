@@ -38,35 +38,35 @@
       <HintPath>..\..\..\SAM_gbXML\references\gbXMLSerializer.dll</HintPath>
     </Reference>
     <Reference Include="Interop.TAS3D">
-      <HintPath>..\..\references_buildonly\Interop.TAS3D.dll</HintPath>
+      <HintPath>..\..\..\SAM_Tas\references_buildonly\Interop.TAS3D.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="Interop.TBD">
-      <HintPath>..\..\references_buildonly\Interop.TBD.dll</HintPath>
+      <HintPath>..\..\..\SAM_Tas\references_buildonly\Interop.TBD.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="Interop.TCD">
-      <HintPath>..\..\references_buildonly\Interop.TCD.dll</HintPath>
+      <HintPath>..\..\..\SAM_Tas\references_buildonly\Interop.TCD.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="Interop.TCR">
-      <HintPath>..\..\references_buildonly\Interop.TCR.dll</HintPath>
+      <HintPath>..\..\..\SAM_Tas\references_buildonly\Interop.TCR.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="Interop.TIC">
-      <HintPath>..\..\references_buildonly\Interop.TIC.dll</HintPath>
+      <HintPath>..\..\..\SAM_Tas\references_buildonly\Interop.TIC.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="Interop.TPD">
-      <HintPath>..\..\references_buildonly\Interop.TPD.dll</HintPath>
+      <HintPath>..\..\..\SAM_Tas\references_buildonly\Interop.TPD.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="Interop.TSD">
-      <HintPath>..\..\references_buildonly\Interop.TSD.dll</HintPath>
+      <HintPath>..\..\..\SAM_Tas\references_buildonly\Interop.TSD.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="Interop.TWD">
-      <HintPath>..\..\references_buildonly\Interop.TWD.dll</HintPath>
+      <HintPath>..\..\..\SAM_Tas\references_buildonly\Interop.TWD.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="SAM.Analytical, Version=1.0.7509.27573, Culture=neutral, processorArchitecture=MSIL">
@@ -78,6 +78,18 @@
     </Reference>
     <Reference Include="SAM.Analytical.Grasshopper">
       <HintPath>..\..\..\SAM\build\SAM.Analytical.Grasshopper.dll</HintPath>
+    </Reference>
+    <Reference Include="SAM.Analytical.Tas">
+      <HintPath>..\..\..\SAM_Tas\build\SAM.Analytical.Tas.dll</HintPath>
+    </Reference>
+    <Reference Include="SAM.Analytical.Tas.SAP">
+      <HintPath>..\..\..\SAM_Tas\build\SAM.Analytical.Tas.SAP.dll</HintPath>
+    </Reference>
+    <Reference Include="SAM.Analytical.Tas.TM59">
+      <HintPath>..\..\..\SAM_Tas\build\SAM.Analytical.Tas.TM59.dll</HintPath>
+    </Reference>
+    <Reference Include="SAM.Analytical.Tas.TPD">
+      <HintPath>..\..\..\SAM_Tas\build\SAM.Analytical.Tas.TPD.dll</HintPath>
     </Reference>
     <Reference Include="SAM.Architectural, Version=1.0.7982.27027, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -92,6 +104,12 @@
     </Reference>
     <Reference Include="SAM.Core.Grasshopper">
       <HintPath>..\..\..\SAM\build\SAM.Core.Grasshopper.dll</HintPath>
+    </Reference>
+    <Reference Include="SAM.Core.Tas">
+      <HintPath>..\..\..\SAM_Tas\build\SAM.Core.Tas.dll</HintPath>
+    </Reference>
+    <Reference Include="SAM.Core.Tas.UKBR">
+      <HintPath>..\..\..\SAM_Tas\build\SAM.Core.Tas.UKBR.dll</HintPath>
     </Reference>
     <Reference Include="SAM.Core.Windows">
       <HintPath>..\..\..\SAM_Windows\build\SAM.Core.Windows.dll</HintPath>
@@ -109,6 +127,9 @@
     <Reference Include="SAM.Weather.Grasshopper">
       <HintPath>..\..\..\SAM\build\SAM.Weather.Grasshopper.dll</HintPath>
     </Reference>
+    <Reference Include="SAM.Weather.Tas">
+      <HintPath>..\..\..\SAM_Tas\build\SAM.Weather.Tas.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <COMReference Include="stdole">
@@ -122,13 +143,6 @@
     </COMReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\SAM_Tas\SAM.Analytical.Tas.SAP\SAM.Analytical.Tas.SAP.csproj" />
-    <ProjectReference Include="..\..\SAM_Tas\SAM.Analytical.Tas.TM59\SAM.Analytical.Tas.TM59.csproj" />
-    <ProjectReference Include="..\..\SAM_Tas\SAM.Analytical.Tas.TPD\SAM.Analytical.Tas.TPD.csproj" />
-    <ProjectReference Include="..\..\SAM_Tas\SAM.Analytical.Tas\SAM.Analytical.Tas.csproj" />
-    <ProjectReference Include="..\..\SAM_Tas\SAM.Core.Tas.UKBR\SAM.Core.Tas.UKBR.csproj" />
-    <ProjectReference Include="..\..\SAM_Tas\SAM.Core.Tas\SAM.Core.Tas.csproj" />
-    <ProjectReference Include="..\..\SAM_Tas\SAM.Weather.Tas\SAM.Weather.Tas.csproj" />
     <ProjectReference Include="..\SAM.Core.Grasshopper.Tas\SAM.Core.Grasshopper.Tas.csproj" />
   </ItemGroup>
   <ItemGroup>
@@ -155,6 +169,6 @@
     <DocumentationFile>..\..\build\SAM.Analytical.Grasshopper.Tas.xml</DocumentationFile>
   </PropertyGroup>
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="copy &quot;$(TargetPath)&quot; &quot;$(TargetDir)\$(ProjectName).gha&quot;&#xD;&#xA;&#xD;&#xA;set SAM_DIR=$(APPDATA)\SAM\&#xD;&#xA;if not exist &quot;%25SAM_DIR%25&quot; mkdir &quot;%25SAM_DIR%25&quot;&#xD;&#xA;&#xD;&#xA;copy &quot;$(TargetDir)*.dll&quot; &quot;%25SAM_DIR%25&quot;&#xD;&#xA;copy &quot;%25SAM_DIR%25\$(ProjectName).dll&quot; &quot;%25SAM_DIR%25\$(ProjectName).gha&quot;&#xD;&#xA;&#xD;&#xA;&#xD;&#xA;xcopy &quot;$(SolutionDir)\files\resources&quot; &quot;$(APPDATA)\SAM\resources&quot; /Y/I/E/S&#xD;&#xA;xcopy &quot;$(SolutionDir)\files\resources&quot; &quot;$(USERPROFILE)\Documents\SAM\resources&quot; /Y/D/I/E/S&#xD;&#xA;&#xD;&#xA;&#xD;&#xA;if Exist &quot;$(SolutionDir)\files\Grasshopper\UserObjects&quot; (&#xD;&#xA;xcopy &quot;$(SolutionDir)\files\Grasshopper\UserObjects&quot; &quot;$(APPDATA)\Grasshopper\UserObjects\SAM&quot; /Y /I /E/S&#xD;&#xA;)&#xD;&#xA;&#xD;&#xA;::erase &quot;%25SAM_DIR%25$(ProjectName).dll&quot;&#xD;&#xA;::erase &quot;$(TargetPath)&quot;" />
+    <Exec Command="copy &quot;$(TargetPath)&quot; &quot;$(TargetDir)\$(ProjectName).gha&quot;&#xD;&#xA;&#xD;&#xA;set SAM_DIR=$(APPDATA)\SAM\&#xD;&#xA;if not exist &quot;%25SAM_DIR%25&quot; mkdir &quot;%25SAM_DIR%25&quot;&#xD;&#xA;&#xD;&#xA;copy &quot;$(TargetDir)*.dll&quot; &quot;%25SAM_DIR%25&quot;&#xD;&#xA;copy &quot;%25SAM_DIR%25\$(ProjectName).dll&quot; &quot;%25SAM_DIR%25\$(ProjectName).gha&quot;&#xD;&#xA;&#xD;&#xA;&#xD;&#xA;if Exist &quot;$(SolutionDir)\files\Grasshopper\UserObjects&quot; (&#xD;&#xA;xcopy &quot;$(SolutionDir)\files\Grasshopper\UserObjects&quot; &quot;$(APPDATA)\Grasshopper\UserObjects\SAM&quot; /Y /I /E/S&#xD;&#xA;)&#xD;&#xA;&#xD;&#xA;::erase &quot;%25SAM_DIR%25$(ProjectName).dll&quot;&#xD;&#xA;::erase &quot;$(TargetPath)&quot;" />
   </Target>
 </Project>
