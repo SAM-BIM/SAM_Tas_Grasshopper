@@ -29,6 +29,12 @@
     <Reference Include="SAM.Core.Grasshopper">
       <HintPath>..\..\..\SAM\build\SAM.Core.Grasshopper.dll</HintPath>
     </Reference>
+    <Reference Include="SAM.Core.Tas">
+      <HintPath>..\..\..\SAM_Tas\build\SAM.Core.Tas.dll</HintPath>
+    </Reference>
+    <Reference Include="SAM.Core.Tas.UKBR">
+      <HintPath>..\..\..\SAM_Tas\build\SAM.Core.Tas.UKBR.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Update="Properties\Resources.Designer.cs">
@@ -42,10 +48,6 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\SAM_Tas\SAM.Core.Tas.UKBR\SAM.Core.Tas.UKBR.csproj" />
-    <ProjectReference Include="..\..\SAM_Tas\SAM.Core.Tas\SAM.Core.Tas.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Grasshopper">

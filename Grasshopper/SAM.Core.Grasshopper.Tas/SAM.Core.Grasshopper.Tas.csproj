@@ -32,11 +32,11 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Interop.TAS3D">
-      <HintPath>..\..\references_buildonly\Interop.TAS3D.dll</HintPath>
+      <HintPath>..\..\..\SAM_Tas\references_buildonly\Interop.TAS3D.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="Interop.TIC">
-      <HintPath>..\..\references_buildonly\Interop.TIC.dll</HintPath>
+      <HintPath>..\..\..\SAM_Tas\references_buildonly\Interop.TIC.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="SAM.Core, Version=1.0.8027.17724, Culture=neutral, processorArchitecture=MSIL">
@@ -45,6 +45,9 @@
     </Reference>
     <Reference Include="SAM.Core.Grasshopper">
       <HintPath>..\..\..\SAM\build\SAM.Core.Grasshopper.dll</HintPath>
+    </Reference>
+    <Reference Include="SAM.Core.Tas">
+      <HintPath>..\..\..\SAM_Tas\build\SAM.Core.Tas.dll</HintPath>
     </Reference>
     <Reference Include="SAM.Geometry">
       <HintPath>..\..\..\SAM\build\SAM.Geometry.dll</HintPath>
@@ -63,9 +66,6 @@
       <Isolated>False</Isolated>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </COMReference>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\SAM_Tas\SAM.Core.Tas\SAM.Core.Tas.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Grasshopper">

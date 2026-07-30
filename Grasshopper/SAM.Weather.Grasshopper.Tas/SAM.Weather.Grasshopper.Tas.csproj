@@ -27,23 +27,23 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Interop.TAS3D">
-      <HintPath>..\..\references_buildonly\Interop.TAS3D.dll</HintPath>
+      <HintPath>..\..\..\SAM_Tas\references_buildonly\Interop.TAS3D.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="Interop.TBD">
-      <HintPath>..\..\references_buildonly\Interop.TBD.dll</HintPath>
+      <HintPath>..\..\..\SAM_Tas\references_buildonly\Interop.TBD.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="Interop.TCD">
-      <HintPath>..\..\references_buildonly\Interop.TCD.dll</HintPath>
+      <HintPath>..\..\..\SAM_Tas\references_buildonly\Interop.TCD.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="Interop.TSD">
-      <HintPath>..\..\references_buildonly\Interop.TSD.dll</HintPath>
+      <HintPath>..\..\..\SAM_Tas\references_buildonly\Interop.TSD.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="Interop.TWD">
-      <HintPath>..\..\references_buildonly\Interop.TWD.dll</HintPath>
+      <HintPath>..\..\..\SAM_Tas\references_buildonly\Interop.TWD.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="SAM.Core">
@@ -52,6 +52,9 @@
     </Reference>
     <Reference Include="SAM.Core.Grasshopper">
       <HintPath>..\..\..\SAM\build\SAM.Core.Grasshopper.dll</HintPath>
+    </Reference>
+    <Reference Include="SAM.Core.Tas">
+      <HintPath>..\..\..\SAM_Tas\build\SAM.Core.Tas.dll</HintPath>
     </Reference>
     <Reference Include="SAM.Geometry">
       <HintPath>..\..\..\SAM\build\SAM.Geometry.dll</HintPath>
@@ -66,6 +69,9 @@
     <Reference Include="SAM.Weather.Grasshopper">
       <HintPath>..\..\..\SAM\build\SAM.Weather.Grasshopper.dll</HintPath>
     </Reference>
+    <Reference Include="SAM.Weather.Tas">
+      <HintPath>..\..\..\SAM_Tas\build\SAM.Weather.Tas.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <COMReference Include="stdole">
@@ -77,10 +83,6 @@
       <Isolated>False</Isolated>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </COMReference>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\SAM_Tas\SAM.Core.Tas\SAM.Core.Tas.csproj" />
-    <ProjectReference Include="..\..\SAM_Tas\SAM.Weather.Tas\SAM.Weather.Tas.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Grasshopper">
