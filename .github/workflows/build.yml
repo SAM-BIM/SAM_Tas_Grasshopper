@@ -27,6 +27,18 @@ jobs:
           fetch-depth: 0
           path: ${{ env.REPO_NAME }}
 
+      # Source-only identity check - runs before the (slow) dependency clone and
+      # build so an identity regression fails fast. Guards three separate
+      # categories: GH_AssemblyInfo.Id (plugin identity, what Grasshopper uses
+      # to tell loaded GHAs apart), [assembly: Guid] (COM typelib id), and
+      # ComponentGuid (identifies placed components inside saved .gh documents,
+      # so an existing one must never change value).
+      - name: Check TAS Grasshopper GUID identity
+        shell: pwsh
+        working-directory: ${{ env.REPO_NAME }}
+        run: |
+          ./.github/scripts/check-guid-identity.ps1 -RepoRoot (Get-Location).Path
+
       - name: Setup .NET 8
         uses: actions/setup-dotnet@v4
         with:

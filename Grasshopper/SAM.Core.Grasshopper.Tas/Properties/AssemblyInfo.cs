@@ -44,7 +44,12 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("cfedd095-cc92-4505-8fc6-19b18719cc13")]
+// (ComVisible is false above, so this is inert either way). Regenerated: was
+// accidentally identical to SAM.Analytical.Grasshopper.Tas's and
+// SAM.Weather.Grasshopper.Tas's assembly Guid (copy-paste in the original 2020
+// commit). Analytical keeps the historical value; this was one of the two
+// accidental duplicates.
+[assembly: Guid("f8f92f21-cea7-4216-9065-24b6ea8fe5a5")]
 
 // Version information for an assembly consists of the following four values:
 //
