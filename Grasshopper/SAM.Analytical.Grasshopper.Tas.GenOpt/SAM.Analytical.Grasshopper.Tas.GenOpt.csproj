@@ -16,11 +16,9 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
     <OutputPath>..\..\build\</OutputPath>
-    <DocumentationFile>..\..\build\SAM.Analytical.Grasshopper.Tas.GenOpt.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Release'">
     <OutputPath>..\..\build\</OutputPath>
-    <DocumentationFile>..\..\build\SAM.Analytical.Grasshopper.Tas.GenOpt.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="SAM.Core.Grasshopper">
