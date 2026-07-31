@@ -29,12 +29,13 @@
       (unreviewed addition - e.g. a brand new component, project, or
       identity that nobody has approved into the baseline yet).
     - Anything present in both, but with a different associated value (a
-      component's file, a plugin/assembly GUID's value), fails. This is
-      what specifically catches: an existing component's GUID silently
-      changing, a component's GUID moving to a different file (including
-      two existing components swapping GUIDs - each swapped GUID reports
-      as an independent "moved" failure), and a removed component's GUID
-      being silently reassigned to an unrelated replacement.
+      component's file+declaring-type, a plugin/assembly GUID's value),
+      fails. This is what specifically catches: an existing component's GUID
+      silently changing, a component's GUID moving to a different file or a
+      different type within the same file (including two existing
+      components swapping GUIDs - each swapped GUID reports as an
+      independent "moved" failure), and a removed component's GUID being
+      silently reassigned to an unrelated replacement.
 
   There is deliberately no "just log a notice" path for any of the above.
   A legitimate change (new component, intentional component move/rename,
@@ -95,6 +96,31 @@ function Get-ActiveCSharpText([string[]]$lines) {
   return [regex]::Replace($joined, '/\*[\s\S]*?\*/', '')
 }
 
+# SDK-style projects (Microsoft.NET.Sdk*) implicitly compile every **\*.cs
+# under the project folder; <Compile Remove="..."> subtracts from that
+# default glob. All six TAS Grasshopper projects are SDK-style, and three of
+# them genuinely use Remove today (e.g. "Classes\**", "ToTAS\GH_Curve.cs") -
+# some of the excluded files still declare a live-looking ComponentGuid on
+# disk (dead code left behind mid-rewrite). Without honouring Remove, this
+# script would inventory a GUID that never actually ships in the built GHA,
+# and - the sharper failure - would not notice if a Remove is later added
+# for a file whose component is genuinely still in use, silently dropping a
+# real component out from under baseline protection while reporting green.
+function Get-CompileExcludePatterns([string]$csprojPath) {
+  [xml]$xml = Get-Content -LiteralPath $csprojPath -Raw
+  $ns = New-Object System.Xml.XmlNamespaceManager($xml.NameTable)
+  return @($xml.SelectNodes('//*[local-name()="Compile"][@Remove]') | ForEach-Object { $_.Remove })
+}
+
+function Convert-MSBuildGlobToRegex([string]$pattern) {
+  $normalized = $pattern -replace '\\', '/'
+  $escaped = [regex]::Escape($normalized)
+  # Order matters: collapse the escaped "**" token before the leftover "*".
+  $escaped = $escaped -replace '\\\*\\\*', '.*'
+  $escaped = $escaped -replace '\\\*', '[^/]*'
+  return '^' + $escaped + '$'
+}
+
 $baselinePath = Join-Path $PSScriptRoot 'guid-baseline.json'
 $ghRoot = Join-Path $RepoRoot 'Grasshopper'
 
@@ -113,12 +139,16 @@ foreach ($proj in $projects) {
   $name = $proj.Name
 
   # --- Plugin identity (GH_AssemblyInfo.Id) -------------------------------
+  # Stripped through Get-ActiveCSharpText first (same as component identity
+  # below): a stale Id left behind in a comment or a disabled #if block must
+  # never be picked up ahead of the live declaration - a raw-text match would
+  # report whichever occurrence comes first in the file, live or not.
   $kernelInfo = Join-Path $proj.FullName 'Kernel\AssemblyInfo.cs'
   if (Test-Path $kernelInfo) {
-    $text = Get-Content -LiteralPath $kernelInfo -Raw
+    $text = Get-ActiveCSharpText (Get-Content -LiteralPath $kernelInfo)
     $m = [regex]::Match($text, 'public\s+override\s+Guid\s+Id\s*\{[\s\S]*?return\s+new\s+Guid\("([0-9a-fA-F-]{36})"\)')
     if (-not $m.Success) {
-      $errors.Add("Could not find GH_AssemblyInfo.Id in $kernelInfo")
+      $errors.Add("Could not find an active (non-commented) GH_AssemblyInfo.Id in $kernelInfo")
     } else {
       $pluginIds[$name] = $m.Groups[1].Value.ToLowerInvariant()
     }
@@ -127,18 +157,29 @@ foreach ($proj in $projects) {
   # --- Assembly identity ([assembly: Guid(...)]) --------------------------
   $propsInfo = Join-Path $proj.FullName 'Properties\AssemblyInfo.cs'
   if (Test-Path $propsInfo) {
-    $text = Get-Content -LiteralPath $propsInfo -Raw
+    $text = Get-ActiveCSharpText (Get-Content -LiteralPath $propsInfo)
     $m = [regex]::Match($text, '\[assembly:\s*Guid\("([0-9a-fA-F-]{36})"\)\]')
     if (-not $m.Success) {
-      $errors.Add("Could not find [assembly: Guid(...)] in $propsInfo")
+      $errors.Add("Could not find an active (non-commented) [assembly: Guid(...)] in $propsInfo")
     } else {
       $assemblyGuids[$name] = $m.Groups[1].Value.ToLowerInvariant()
     }
   }
 
   # --- Component identity (ComponentGuid) ---------------------------------
+  $csprojPath = Join-Path $proj.FullName "$name.csproj"
+  $excludeRegexes = @()
+  if (Test-Path $csprojPath) {
+    $excludeRegexes = @(Get-CompileExcludePatterns $csprojPath | ForEach-Object { Convert-MSBuildGlobToRegex $_ })
+  }
+
   Get-ChildItem -Path $proj.FullName -Recurse -Filter '*.cs' -File |
     Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' } |
+    Where-Object {
+      if ($excludeRegexes.Count -eq 0) { return $true }
+      $projRel = $_.FullName.Substring($proj.FullName.Length).TrimStart('\', '/').Replace('\', '/')
+      -not ($excludeRegexes | Where-Object { $projRel -imatch $_ })
+    } |
     ForEach-Object {
       # Strip text that isn't actually compiled (line/block comments, disabled
       # #if false/#if 0 blocks) before matching, so a removed-but-still-present
@@ -149,11 +190,31 @@ foreach ($proj in $projects) {
       # Guid(...) or the C# 9 target-typed `new ("...")` form - both appear in
       # this codebase.
       $matches = [regex]::Matches($text, 'Guid\s+ComponentGuid\s*(?:=>|\{[\s\S]*?get[\s\S]*?return)\s*new\s*(?:Guid)?\s*\(\s*"([0-9a-fA-F-]{36})"\s*\)')
+
+      # Nearest-preceding-class-declaration heuristic (deliberately not a
+      # real C# parser, same spirit as Get-ActiveCSharpText): when a file
+      # declares more than one component/param type, two of them swapping
+      # ComponentGuid values previously went undetected - both baseline
+      # entries still mapped to the same File, so the strict comparison saw
+      # no change. Recording the declaring type alongside File turns that
+      # swap into two independent "value changed" failures, same as a swap
+      # across two different files already produces.
+      $classDecls = [regex]::Matches($text, '\bclass\s+(\w+)')
       foreach ($m in $matches) {
         $rel = $_.FullName.Substring($RepoRoot.Length).TrimStart('\', '/').Replace('\', '/')
+        $typeName = $null
+        foreach ($c in $classDecls) {
+          if ($c.Index -gt $m.Index) { break }
+          $typeName = $c.Groups[1].Value
+        }
+        if (-not $typeName) {
+          $errors.Add("Component identity (ComponentGuid): $rel has a ComponentGuid declaration at text offset $($m.Index) with no enclosing 'class' found before it - cannot attribute it to a type.")
+          continue
+        }
         $componentGuids.Add([pscustomobject]@{
           Guid = $m.Groups[1].Value.ToLowerInvariant()
           File = $rel
+          Type = $typeName
         })
       }
 
@@ -166,7 +227,19 @@ foreach ($proj in $projects) {
       # duplicate check - reopening exactly the collision this script exists
       # to prevent. This does not need to understand the unsupported form,
       # only to notice the count disagrees.
-      $declarationCount = [regex]::Matches($text, '(?:public|protected)\s+override\s+Guid\s+ComponentGuid\b').Count
+      #
+      # Deliberately NOT anchored to a specific accessibility modifier list
+      # (a prior version required "(?:public|protected) override" with
+      # nothing in between, which a legal `public sealed override` or
+      # `protected internal override` silently slipped past - neither this
+      # counter nor the literal extractor above requires a fixed modifier
+      # prefix, so a mismatched form there produced 0 and 0: no
+      # disagreement, no error, the component vanishing from the inventory
+      # exactly like the unsupported-form case this check exists to catch).
+      # `override` immediately followed by the property signature is the
+      # real, non-optional signal - C# does not let any other member kind
+      # legally precede `Guid ComponentGuid` with the `override` keyword.
+      $declarationCount = [regex]::Matches($text, '\boverride\s+Guid\s+ComponentGuid\b').Count
       if ($declarationCount -gt $matches.Count) {
         $rel = $_.FullName.Substring($RepoRoot.Length).TrimStart('\', '/').Replace('\', '/')
         $errors.Add("Component identity (ComponentGuid): $rel declares $declarationCount ComponentGuid override(s) but only $($matches.Count) could be parsed as a literal `new Guid(`"...`")` (or target-typed `new(`"...`")`) constant. Every ComponentGuid must use that literal form so this check can enumerate it - rewrite the declaration, or extend the parser if a new form is intentional.")
@@ -197,7 +270,7 @@ Test-NoDuplicates $assemblyGuids 'assembly identity ([assembly: Guid])'
 $componentByValue = @{}
 foreach ($entry in $componentGuids) {
   if (-not $componentByValue.ContainsKey($entry.Guid)) { $componentByValue[$entry.Guid] = New-Object System.Collections.Generic.List[string] }
-  $componentByValue[$entry.Guid].Add($entry.File)
+  $componentByValue[$entry.Guid].Add("$($entry.File)#$($entry.Type)")
 }
 foreach ($v in $componentByValue.Keys) {
   if ($componentByValue[$v].Count -gt 1) {
@@ -207,15 +280,19 @@ foreach ($v in $componentByValue.Keys) {
 
 # --- Build current snapshot ----------------------------------------------
 
+# Value is "File#Type", not just File: two components declared in the same
+# file swapping ComponentGuid values must independently fail the strict
+# comparison below, the same way a swap across two different files already
+# does (see the "class declaration" comment above the extraction loop).
 $componentMap = [ordered]@{}
 foreach ($entry in ($componentGuids | Sort-Object Guid)) {
-  $componentMap[$entry.Guid] = $entry.File
+  $componentMap[$entry.Guid] = "$($entry.File)#$($entry.Type)"
 }
 
 $currentProjectNames = @($projects.Name)
 
 $current = [ordered]@{
-  schemaVersion  = 2
+  schemaVersion  = 3
   projects       = $currentProjectNames
   pluginIds      = $pluginIds
   assemblyGuids  = $assemblyGuids
