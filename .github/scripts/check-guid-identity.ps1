@@ -63,6 +63,38 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+# Strips text that never actually compiles, so a "removed" component hidden
+# behind a comment or a disabled preprocessor block is not silently counted
+# as still live. Deliberately bounded, not a real C# parser:
+#   - '//' line comments (existing behaviour).
+#   - '/* ... */' block comments, including ones spanning multiple lines.
+#   - '#if false' / '#if 0' ... matching '#endif' spans. Nesting is tracked
+#     only for finding the matching #endif; any #else/#elif inside such a
+#     span is conservatively also treated as inactive (real symbol
+#     evaluation, e.g. '#if DEBUG', is out of scope - anything other than
+#     the literal false/0 is assumed active, matching normal compilation).
+function Get-ActiveCSharpText([string[]]$lines) {
+  $kept = New-Object System.Collections.Generic.List[string]
+  $skipDepth = 0
+  foreach ($line in $lines) {
+    $trimmed = $line.TrimStart()
+    if ($trimmed -match '^#if\s+(false|0)\b') {
+      $skipDepth++
+      $kept.Add('')
+      continue
+    }
+    if ($skipDepth -gt 0) {
+      if ($trimmed -match '^#if\b') { $skipDepth++ }
+      elseif ($trimmed -match '^#endif\b') { $skipDepth-- }
+      $kept.Add('')
+      continue
+    }
+    $kept.Add([regex]::Replace($line, '//.*$', ''))
+  }
+  $joined = $kept -join "`n"
+  return [regex]::Replace($joined, '/\*[\s\S]*?\*/', '')
+}
+
 $baselinePath = Join-Path $PSScriptRoot 'guid-baseline.json'
 $ghRoot = Join-Path $RepoRoot 'Grasshopper'
 
@@ -108,12 +140,12 @@ foreach ($proj in $projects) {
   Get-ChildItem -Path $proj.FullName -Recurse -Filter '*.cs' -File |
     Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' } |
     ForEach-Object {
-      # Strip '//' line comments before matching, so a commented-out
-      # ComponentGuid override (e.g. dead code left during a rewrite) is not
-      # picked up as a live identity - it isn't compiled, so it can't collide.
-      $lines = Get-Content -LiteralPath $_.FullName |
-        ForEach-Object { [regex]::Replace($_, '//.*$', '') }
-      $text = $lines -join "`n"
+      # Strip text that isn't actually compiled (line/block comments, disabled
+      # #if false/#if 0 blocks) before matching, so a removed-but-still-present
+      # ComponentGuid (e.g. dead code left during a rewrite) is not picked up
+      # as a live identity - see Get-ActiveCSharpText above.
+      $lines = Get-Content -LiteralPath $_.FullName
+      $text = Get-ActiveCSharpText $lines
       # Guid(...) or the C# 9 target-typed `new ("...")` form - both appear in
       # this codebase.
       $matches = [regex]::Matches($text, 'Guid\s+ComponentGuid\s*(?:=>|\{[\s\S]*?get[\s\S]*?return)\s*new\s*(?:Guid)?\s*\(\s*"([0-9a-fA-F-]{36})"\s*\)')
