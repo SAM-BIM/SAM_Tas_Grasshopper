@@ -1,5 +1,13 @@
 ﻿{
-    "schemaVersion":  1,
+    "schemaVersion":  2,
+    "projects":  [
+                     "SAM.Analytical.Grasshopper.Tas",
+                     "SAM.Analytical.Grasshopper.Tas.GenOpt",
+                     "SAM.Analytical.Grasshopper.Tas.TPD",
+                     "SAM.Core.Grasshopper.Tas",
+                     "SAM.Core.Grasshopper.Tas.UKBR",
+                     "SAM.Weather.Grasshopper.Tas"
+                 ],
     "pluginIds":  {
                       "SAM.Analytical.Grasshopper.Tas":  "41efcf7f-7fc8-4ed2-85d0-d116b6c30e8b",
                       "SAM.Analytical.Grasshopper.Tas.GenOpt":  "5e5594d2-65e3-4aec-b9f2-105ffb1923ea",
