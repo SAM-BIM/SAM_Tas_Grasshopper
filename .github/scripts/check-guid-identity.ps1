@@ -116,12 +116,28 @@ foreach ($proj in $projects) {
       $text = $lines -join "`n"
       # Guid(...) or the C# 9 target-typed `new ("...")` form - both appear in
       # this codebase.
-      foreach ($m in [regex]::Matches($text, 'Guid\s+ComponentGuid\s*(?:=>|\{[\s\S]*?get[\s\S]*?return)\s*new\s*(?:Guid)?\s*\(\s*"([0-9a-fA-F-]{36})"\s*\)')) {
+      $matches = [regex]::Matches($text, 'Guid\s+ComponentGuid\s*(?:=>|\{[\s\S]*?get[\s\S]*?return)\s*new\s*(?:Guid)?\s*\(\s*"([0-9a-fA-F-]{36})"\s*\)')
+      foreach ($m in $matches) {
         $rel = $_.FullName.Substring($RepoRoot.Length).TrimStart('\', '/').Replace('\', '/')
         $componentGuids.Add([pscustomobject]@{
           Guid = $m.Groups[1].Value.ToLowerInvariant()
           File = $rel
         })
+      }
+
+      # Independent sanity check: count every ComponentGuid *declaration*
+      # (the property signature, regardless of body form) and compare against
+      # how many of them the literal-constructor regex above actually
+      # extracted a value from. A declaration using an unsupported form (e.g.
+      # Guid.Parse("..."), a field-backed property, a ternary) would
+      # otherwise silently vanish from the inventory - no baseline entry, no
+      # duplicate check - reopening exactly the collision this script exists
+      # to prevent. This does not need to understand the unsupported form,
+      # only to notice the count disagrees.
+      $declarationCount = [regex]::Matches($text, '(?:public|protected)\s+override\s+Guid\s+ComponentGuid\b').Count
+      if ($declarationCount -gt $matches.Count) {
+        $rel = $_.FullName.Substring($RepoRoot.Length).TrimStart('\', '/').Replace('\', '/')
+        $errors.Add("Component identity (ComponentGuid): $rel declares $declarationCount ComponentGuid override(s) but only $($matches.Count) could be parsed as a literal `new Guid(`"...`")` (or target-typed `new(`"...`")`) constant. Every ComponentGuid must use that literal form so this check can enumerate it - rewrite the declaration, or extend the parser if a new form is intentional.")
       }
     }
 }
