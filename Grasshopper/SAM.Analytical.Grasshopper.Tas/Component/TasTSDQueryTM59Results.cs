@@ -208,13 +208,31 @@ namespace SAM.Analytical.Grasshopper.Tas
             //Everything from here on is TM59AssessmentCalculator's - the same sequence this component used to
             //state inline, now in SAM.Analytical where it can be called and tested. The TSD read above is the
             //only part that needs TAS. Create.TM59AssessmentCalculator stamps the two series keys the TSD
-            //conversion writes and the provenance this assembly has always stamped.
-            TM59AssessmentCalculator tM59AssessmentCalculator = analyticalModel_TSD.TM59AssessmentCalculator();
+            //conversion writes and the provenance this assembly has always stamped, and builds the
+            //SimulationSpaceMap from the zone guid TAS preserves across the round trip.
+            //
+            //That map is why this component no longer matches spaces by NAME. Every flat in a block has a
+            //"Bedroom 2", and the old code restored one flat's internal condition onto another flat's room -
+            //driving the assessment with the wrong occupancy profile and the wrong system, then reporting the
+            //answer as if it belonged to the right room. Where an identity does not resolve the space is now
+            //left out and the reason reported, rather than paired with a same-named room.
+            TM59AssessmentCalculator tM59AssessmentCalculator = analyticalModel_TSD.TM59AssessmentCalculator(analyticalModel);
             tM59AssessmentCalculator.TM52BuildingCategory = tM52BuildingCategory;
 
-            tM59AssessmentCalculator.RestoreDesignInternalConditions(analyticalModel);
+            tM59AssessmentCalculator.RestoreDesignInternalConditions();
+
+            List<string> associationRefusals = [.. tM59AssessmentCalculator.AssociationRefusals];
 
             List<Space> spaces_Result = tM59AssessmentCalculator.Spaces(spaces, zones);
+
+            associationRefusals.AddRange(tM59AssessmentCalculator.AssociationRefusals);
+
+            //Reported as warnings, not swallowed: a space missing from the assessment because its identity could
+            //not be resolved is a gap the user has to be able to see.
+            foreach (string associationRefusal in associationRefusals)
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, associationRefusal);
+            }
 
             TM59AssessmentResult tM59AssessmentResult = tM59AssessmentCalculator.Calculate(spaces_Result, extended);
             if (tM59AssessmentResult == null)
