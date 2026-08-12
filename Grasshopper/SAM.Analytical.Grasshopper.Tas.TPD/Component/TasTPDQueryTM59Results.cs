@@ -275,6 +275,14 @@ namespace SAM.Analytical.Grasshopper.Tas.TPD
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, refusal);
             }
 
+            //Checked rather than assumed: the preparation returns no model on its own refusal branches, and
+            //dereferencing that would surface a NullReferenceException where a refusal was already reported.
+            if (!approximateResultantTemperatureMap.IsSupported)
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The TPD preparation produced no model to assess.");
+                return;
+            }
+
             //Step 3 of 3: the common, engine-neutral assessment - the same one the TSD-simple route runs. This
             //component no longer holds its own copy of the TM59 recipe.
             TM59AssessmentCalculator tM59AssessmentCalculator = approximateResultantTemperatureMap.AnalyticalModel.TM59AssessmentCalculator(analyticalModel);
