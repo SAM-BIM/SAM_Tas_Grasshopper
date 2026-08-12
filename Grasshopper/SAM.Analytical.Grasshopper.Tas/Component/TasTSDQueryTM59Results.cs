@@ -24,7 +24,7 @@ namespace SAM.Analytical.Grasshopper.Tas
         /// <summary>
         /// The latest version of this component
         /// </summary>
-        public override string LatestComponentVersion => "1.0.7";
+        public override string LatestComponentVersion => "1.0.8";
 
         public override GH_Exposure Exposure => GH_Exposure.quarternary;
 
@@ -68,6 +68,9 @@ namespace SAM.Analytical.Grasshopper.Tas
                 boolean = new global::Grasshopper.Kernel.Parameters.Param_Boolean() { Name = "_run", NickName = "_run", Description = "Connect a boolean toggle to run.", Access = GH_ParamAccess.item };
                 boolean.SetPersistentData(false);
                 result.Add(new GH_SAMParam(boolean, ParamVisibility.Binding));
+
+                //Appended so every existing input keeps its saved Grasshopper port index.
+                result.Add(new GH_SAMParam(new GooAnalyticalObjectParam() { Name = "overheatingScenarios_", NickName = "overheatingScenarios_", Description = "SAM Part O Overheating Scenarios. When supplied, they are authoritative over the TM59 ventilation criterion.", Access = GH_ParamAccess.list, Optional = true }, ParamVisibility.Voluntary));
 
                 return [.. result];
             }
@@ -170,6 +173,21 @@ namespace SAM.Analytical.Grasshopper.Tas
                 return;
             }
 
+            List<OverheatingScenario> overheatingScenarios = null;
+            index = Params.IndexOfInputParam("overheatingScenarios_");
+            if (index != -1)
+            {
+                List<IAnalyticalObject> analyticalObjects = [];
+                if (dataAccess.GetDataList(index, analyticalObjects))
+                {
+                    overheatingScenarios = analyticalObjects.FindAll(x => x is OverheatingScenario).ConvertAll(x => x as OverheatingScenario);
+                    if (overheatingScenarios.Count == 0)
+                    {
+                        overheatingScenarios = null;
+                    }
+                }
+            }
+
             index = Params.IndexOfInputParam("_tM52BuildingCategory");
             string @string = null;
             if (index == -1 || !dataAccess.GetData(index, ref @string) || string.IsNullOrEmpty(@string))
@@ -219,6 +237,17 @@ namespace SAM.Analytical.Grasshopper.Tas
             TM59AssessmentCalculator tM59AssessmentCalculator = analyticalModel_TSD.TM59AssessmentCalculator(analyticalModel);
             tM59AssessmentCalculator.TM52BuildingCategory = tM52BuildingCategory;
 
+            if (overheatingScenarios != null)
+            {
+                OverheatingScenarioMap overheatingScenarioMap = new(overheatingScenarios, analyticalModel, tM59AssessmentCalculator.SimulationSpaceMap);
+                tM59AssessmentCalculator.VentilationStrategyMap = overheatingScenarioMap.VentilationStrategyMap;
+
+                foreach (string refusal in overheatingScenarioMap.Refusals)
+                {
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, refusal);
+                }
+            }
+
             tM59AssessmentCalculator.RestoreDesignInternalConditions();
 
             List<string> associationRefusals = [.. tM59AssessmentCalculator.AssociationRefusals];
@@ -239,6 +268,11 @@ namespace SAM.Analytical.Grasshopper.Tas
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Invalid data");
                 return;
+            }
+
+            foreach (string refusal in tM59AssessmentResult.VentilationStrategyRefusals)
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, refusal);
             }
 
             index = Params.IndexOfOutputParam("spaces");
