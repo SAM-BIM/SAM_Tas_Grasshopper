@@ -207,8 +207,9 @@ namespace SAM.Analytical.Grasshopper.Tas
             if (converted)
             {
                 bool converted_TM59 = false;
+                string path_TM59 = null;
 
-                if (Analytical.Tas.TM59.Modify.TryCreatePath(path, out string path_TM59))
+                if (Analytical.Tas.TM59.Modify.TryCreatePath(path, out path_TM59))
                 {
                     TM59Manager tM59Manager = new(textMap);
 
@@ -239,6 +240,15 @@ namespace SAM.Analytical.Grasshopper.Tas
                             }
                         }
                     }
+                }
+
+                //A refused TM59 conversion must not leave a previous run's XML beside the freshly rewritten
+                //TBD - TAS would open ventilation strategies that no longer correspond to this model or its
+                //scenarios. This covers both refusals: an incomplete scenario map (ToXml never called) and a
+                //conversion that refuses after being called (for example, a model that now holds no spaces).
+                if (!converted_TM59 && !string.IsNullOrWhiteSpace(path_TM59) && System.IO.File.Exists(path_TM59))
+                {
+                    System.IO.File.Delete(path_TM59);
                 }
 
                 successful = converted_TM59;
