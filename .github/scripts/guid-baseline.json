@@ -125,6 +125,7 @@
                            "f235ee43-7a90-4771-acec-42bb6d5c8ed3":  "Grasshopper/SAM.Analytical.Grasshopper.Tas/Component/TasCopyCalendar.cs#TasCopyCalendar",
                            "f772af0f-7969-4441-8bed-107fcffaacd5":  "Grasshopper/SAM.Analytical.Grasshopper.Tas/Component/SAMAnalyticalTBD.cs#SAMAnalyticalTBD",
                            "f96d445d-d650-4e29-8618-e24ad86f1de6":  "Grasshopper/SAM.Analytical.Grasshopper.Tas.GenOpt/Component/SAMAnalyticalMeshAlgorithm.cs#SAMAnalyticalMeshAlgorithm",
+                           "fb234a4c-4302-4490-b6a7-6b19f9495fbc":  "Grasshopper/SAM.Analytical.Grasshopper.Tas/Component/TasLogPartODiagnostics.cs#TasLogPartODiagnostics",
                            "fd882916-69fd-43f5-aa19-cb96c993daa3":  "Grasshopper/SAM.Analytical.Grasshopper.Tas.TPD/Component/TasSystemResults.cs#TasSystemResults"
                        }
 }
