@@ -24,7 +24,7 @@ namespace SAM.Analytical.Grasshopper.Tas
         /// <summary>
         /// The latest version of this component
         /// </summary>
-        public override string LatestComponentVersion => "1.0.8";
+        public override string LatestComponentVersion => "1.0.9";
 
         public override GH_Exposure Exposure => GH_Exposure.quarternary;
 
@@ -92,6 +92,9 @@ namespace SAM.Analytical.Grasshopper.Tas
                 result.Add(new GH_SAMParam(new global::Grasshopper.Kernel.Parameters.Param_Number() { Name = "indoorComfortLowerLimitTemperatures", NickName = "indoorComfortLLTemperatures Tll", Description = "Indoor Comfort Lower Limit Temperatures Tll \nTcomf = 0.33 Trm + 18.8  where TuppCatII =0.33 Trm + 18.8-4 ", Access = GH_ParamAccess.list }, ParamVisibility.Binding));
 
                 result.Add(new GH_SAMParam(new global::Grasshopper.Kernel.Parameters.Param_Boolean() { Name = "successful", NickName = "successful", Description = "Correctly extracted?", Access = GH_ParamAccess.item }, ParamVisibility.Binding));
+
+                //Appended so every existing output keeps its saved Grasshopper port index.
+                result.Add(new GH_SAMParam(new global::Grasshopper.Kernel.Parameters.Param_String() { Name = "report", NickName = "report", Description = "Human-readable TM59 verification summary containing natural ventilation, mechanical ventilation and corridor results, margins, status and legend. Intended for direct connection to a Grasshopper Panel.", Access = GH_ParamAccess.item }, ParamVisibility.Voluntary));
 
                 return [.. result];
             }
@@ -309,6 +312,14 @@ namespace SAM.Analytical.Grasshopper.Tas
             if (index != -1)
             {
                 dataAccess.SetDataList(index, tM59AssessmentResult.MinIndoorComfortTemperatures?.Values);
+            }
+
+            index = Params.IndexOfOutputParam("report");
+            if (index != -1)
+            {
+                //A view over the result that was just published on the other outputs - it reads their numbers
+                //and verdicts and reformats them. It runs no assessment, so connecting it cannot change them.
+                dataAccess.SetData(index, new TM59AssessmentReport(tM59AssessmentResult, path).ToString());
             }
 
             if (index_Successful != -1)
