@@ -24,7 +24,7 @@ namespace SAM.Analytical.Grasshopper.Tas
         /// <summary>
         /// The latest version of this component
         /// </summary>
-        public override string LatestComponentVersion => "1.0.9";
+        public override string LatestComponentVersion => "1.1.0";
 
         public override GH_Exposure Exposure => GH_Exposure.quarternary;
 
@@ -72,6 +72,12 @@ namespace SAM.Analytical.Grasshopper.Tas
                 //Appended so every existing input keeps its saved Grasshopper port index.
                 result.Add(new GH_SAMParam(new GooAnalyticalObjectParam() { Name = "overheatingScenarios_", NickName = "overheatingScenarios_", Description = "SAM Part O Overheating Scenarios. When supplied, they are authoritative over the TM59 ventilation criterion.", Access = GH_ParamAccess.list, Optional = true }, ParamVisibility.Voluntary));
 
+                global::Grasshopper.Kernel.Parameters.Param_Boolean saveReport = new global::Grasshopper.Kernel.Parameters.Param_Boolean() { Name = "_saveReport_", NickName = "_saveReport_", Description = "Set to True to write the report text to reportFilePath_. Leave False (the default) so a normal Grasshopper recomputation never creates or overwrites a file.", Access = GH_ParamAccess.item, Optional = true };
+                saveReport.SetPersistentData(false);
+                result.Add(new GH_SAMParam(saveReport, ParamVisibility.Voluntary));
+
+                result.Add(new GH_SAMParam(new global::Grasshopper.Kernel.Parameters.Param_String() { Name = "reportFilePath_", NickName = "reportFilePath_", Description = "File path the report text is written to when _saveReport_ is True.", Access = GH_ParamAccess.item, Optional = true }, ParamVisibility.Voluntary));
+
                 return [.. result];
             }
         }
@@ -95,6 +101,8 @@ namespace SAM.Analytical.Grasshopper.Tas
 
                 //Appended so every existing output keeps its saved Grasshopper port index.
                 result.Add(new GH_SAMParam(new global::Grasshopper.Kernel.Parameters.Param_String() { Name = "report", NickName = "report", Description = "Human-readable TM59 verification summary containing natural ventilation, mechanical ventilation and corridor results, margins, status and legend. Intended for direct connection to a Grasshopper Panel.", Access = GH_ParamAccess.item }, ParamVisibility.Voluntary));
+
+                result.Add(new GH_SAMParam(new global::Grasshopper.Kernel.Parameters.Param_String() { Name = "reportFilePath", NickName = "reportFilePath", Description = "The path the report was actually written to. Empty unless _saveReport_ is True and the write succeeded.", Access = GH_ParamAccess.item }, ParamVisibility.Voluntary));
 
                 return [.. result];
             }
@@ -314,12 +322,57 @@ namespace SAM.Analytical.Grasshopper.Tas
                 dataAccess.SetDataList(index, tM59AssessmentResult.MinIndoorComfortTemperatures?.Values);
             }
 
+            string report = new TM59AssessmentReport(tM59AssessmentResult, path).ToString();
+
             index = Params.IndexOfOutputParam("report");
             if (index != -1)
             {
                 //A view over the result that was just published on the other outputs - it reads their numbers
                 //and verdicts and reformats them. It runs no assessment, so connecting it cannot change them.
-                dataAccess.SetData(index, new TM59AssessmentReport(tM59AssessmentResult, path).ToString());
+                dataAccess.SetData(index, report);
+            }
+
+            //Voluntary, and off by default: a normal Grasshopper recomputation (opening the file, a solver
+            //pass triggered by an unrelated upstream change) must never create or overwrite a file on disk.
+            //Only an explicit _saveReport_ = True does that, and only to the exact path stated - never a
+            //fallback location, and never a false claim of success.
+            bool saveReport = false;
+            index = Params.IndexOfInputParam("_saveReport_");
+            if (index != -1)
+            {
+                dataAccess.GetData(index, ref saveReport);
+            }
+
+            if (saveReport)
+            {
+                string reportFilePath = null;
+                index = Params.IndexOfInputParam("reportFilePath_");
+                if (index != -1)
+                {
+                    dataAccess.GetData(index, ref reportFilePath);
+                }
+
+                if (string.IsNullOrWhiteSpace(reportFilePath))
+                {
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "_saveReport_ is True but reportFilePath_ is empty. Report not saved.");
+                }
+                else
+                {
+                    try
+                    {
+                        System.IO.File.WriteAllText(reportFilePath, report, System.Text.Encoding.UTF8);
+
+                        int index_ReportFilePath = Params.IndexOfOutputParam("reportFilePath");
+                        if (index_ReportFilePath != -1)
+                        {
+                            dataAccess.SetData(index_ReportFilePath, reportFilePath);
+                        }
+                    }
+                    catch (Exception exception)
+                    {
+                        AddRuntimeMessage(GH_RuntimeMessageLevel.Error, string.Format("Could not save report to '{0}': {1}", reportFilePath, exception.Message));
+                    }
+                }
             }
 
             if (index_Successful != -1)
