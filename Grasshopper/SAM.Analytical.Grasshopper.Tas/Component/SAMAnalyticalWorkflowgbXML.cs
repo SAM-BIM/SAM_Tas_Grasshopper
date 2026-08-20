@@ -351,12 +351,32 @@ namespace SAM.Analytical.Grasshopper.Tas
                 UpdateWindowPositionType = updateWindowPositionType
             };
 
-            analyticalModel = Modify.RunWorkflow(analyticalModel, workflowSettings, out bool cancelled);
+            analyticalModel = Modify.RunWorkflow(analyticalModel, workflowSettings, out bool cancelled, out System.Collections.Generic.List<string> notes);
 
             if (cancelled)
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Remark, "Workflow cancelled by user. Partially written .t3d/.tbd/.tsd files may remain - set _removeTBD_ to True for a clean rerun.");
                 return;
+            }
+
+            //The workflow's own record of skips and refusals - the two aperture-control steps name each
+            //aperture that states an availability schedule and what the TBD profile carries afterwards,
+            //which is what makes a Part O schedule that did not reach the TBD diagnosable from the canvas
+            //instead of invisible. Problem lines carry the ISSUE prefix and are raised as warnings;
+            //everything else (the per-step summaries and the per-aperture read-backs) is a remark. The
+            //workflow already restricts its per-aperture lines to apertures that request a schedule and to
+            //failures, so an ordinary model contributes a handful of lines, not one per window.
+            //Fully qualified: this component's own namespace carries a Modify of its own.
+            foreach (string note in notes ?? [])
+            {
+                if (note.StartsWith(SAM.Analytical.Tas.Modify.NotePrefix_Issue, System.StringComparison.Ordinal))
+                {
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, note.Substring(SAM.Analytical.Tas.Modify.NotePrefix_Issue.Length));
+                }
+                else
+                {
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Remark, note);
+                }
             }
 
             try
