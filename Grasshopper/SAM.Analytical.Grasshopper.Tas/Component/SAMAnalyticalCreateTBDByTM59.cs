@@ -248,7 +248,17 @@ namespace SAM.Analytical.Grasshopper.Tas
                 //conversion that refuses after being called (for example, a model that now holds no spaces).
                 if (!converted_TM59 && !string.IsNullOrWhiteSpace(path_TM59) && System.IO.File.Exists(path_TM59))
                 {
-                    System.IO.File.Delete(path_TM59);
+                    //A locked or read-only stale XML cannot be removed. Reported, never thrown out of the
+                    //component - this is already a refused run, and an escaping exception would crash the
+                    //canvas instead of leaving successful = false.
+                    try
+                    {
+                        System.IO.File.Delete(path_TM59);
+                    }
+                    catch (System.Exception exception)
+                    {
+                        AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "The previous TM59 XML '" + path_TM59 + "' could not be removed: " + exception.Message);
+                    }
                 }
 
                 successful = converted_TM59;
