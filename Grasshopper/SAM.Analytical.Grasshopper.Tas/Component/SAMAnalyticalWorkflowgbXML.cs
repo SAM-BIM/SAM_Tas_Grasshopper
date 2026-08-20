@@ -359,13 +359,12 @@ namespace SAM.Analytical.Grasshopper.Tas
                 return;
             }
 
-            //The workflow's own record of skips and refusals - the two aperture-control steps name each
-            //aperture that states an availability schedule and what the TBD profile carries afterwards,
-            //which is what makes a Part O schedule that did not reach the TBD diagnosable from the canvas
-            //instead of invisible. Problem lines carry the ISSUE prefix and are raised as warnings;
-            //everything else (the per-step summaries and the per-aperture read-backs) is a remark. The
-            //workflow already restricts its per-aperture lines to apertures that request a schedule and to
-            //failures, so an ordinary model contributes a handful of lines, not one per window.
+            //The workflow's own record of skips and refusals. Problem lines carry the ISSUE prefix and are
+            //raised as warnings; everything else - the per-step summaries, such as how many apertures
+            //requested an availability schedule and how many carry one afterwards - is a remark. A run in
+            //which every aperture succeeded contributes those summary remarks and nothing else: per-aperture
+            //lines are emitted only for an aperture that asked for a schedule and did not end up with one,
+            //which is what keeps a Part O failure visible on the canvas without narrating each window.
             //Fully qualified: this component's own namespace carries a Modify of its own.
             foreach (string note in notes ?? [])
             {
