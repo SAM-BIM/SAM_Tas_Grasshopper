@@ -24,7 +24,7 @@ namespace SAM.Analytical.Grasshopper.Tas
         /// <summary>
         /// The latest version of this component
         /// </summary>
-        public override string LatestComponentVersion => "1.0.7";
+        public override string LatestComponentVersion => "1.1.0";
 
         public override GH_Exposure Exposure => GH_Exposure.quarternary;
 
@@ -65,11 +65,18 @@ namespace SAM.Analytical.Grasshopper.Tas
                 @string.SetPersistentData(TM52BuildingCategory.CategoryII.ToString());
                 result.Add(new GH_SAMParam(@string, ParamVisibility.Binding));
 
-                global::Grasshopper.Kernel.Parameters.Param_Integer @integer;
-
                 boolean = new global::Grasshopper.Kernel.Parameters.Param_Boolean() { Name = "_run", NickName = "_run", Description = "Connect a boolean toggle to run.", Access = GH_ParamAccess.item };
                 boolean.SetPersistentData(false);
                 result.Add(new GH_SAMParam(boolean, ParamVisibility.Binding));
+
+                //Appended so every existing input keeps its saved Grasshopper port index.
+                result.Add(new GH_SAMParam(new GooAnalyticalObjectParam() { Name = "overheatingScenarios_", NickName = "overheatingScenarios_", Description = "SAM Part O Overheating Scenarios. When supplied, they are authoritative over the TM59 ventilation criterion.", Access = GH_ParamAccess.list, Optional = true }, ParamVisibility.Voluntary));
+
+                global::Grasshopper.Kernel.Parameters.Param_Boolean saveReport = new global::Grasshopper.Kernel.Parameters.Param_Boolean() { Name = "_saveReport_", NickName = "_saveReport_", Description = "Set to True to write the report text to reportFilePath_. Leave False (the default) so a normal Grasshopper recomputation never creates or overwrites a file.", Access = GH_ParamAccess.item, Optional = true };
+                saveReport.SetPersistentData(false);
+                result.Add(new GH_SAMParam(saveReport, ParamVisibility.Voluntary));
+
+                result.Add(new GH_SAMParam(new global::Grasshopper.Kernel.Parameters.Param_String() { Name = "reportFilePath_", NickName = "reportFilePath_", Description = "File path the report text is written to when _saveReport_ is True.", Access = GH_ParamAccess.item, Optional = true }, ParamVisibility.Voluntary));
 
                 return [.. result];
             }
@@ -91,6 +98,11 @@ namespace SAM.Analytical.Grasshopper.Tas
                 result.Add(new GH_SAMParam(new global::Grasshopper.Kernel.Parameters.Param_Number() { Name = "indoorComfortLowerLimitTemperatures", NickName = "indoorComfortLLTemperatures Tll", Description = "Indoor Comfort Lower Limit Temperatures Tll \nTcomf = 0.33 Trm + 18.8  where TuppCatII =0.33 Trm + 18.8-4 ", Access = GH_ParamAccess.list }, ParamVisibility.Binding));
 
                 result.Add(new GH_SAMParam(new global::Grasshopper.Kernel.Parameters.Param_Boolean() { Name = "successful", NickName = "successful", Description = "Correctly extracted?", Access = GH_ParamAccess.item }, ParamVisibility.Binding));
+
+                //Appended so every existing output keeps its saved Grasshopper port index.
+                result.Add(new GH_SAMParam(new global::Grasshopper.Kernel.Parameters.Param_String() { Name = "report", NickName = "report", Description = "Human-readable TM59 verification summary containing natural ventilation, mechanical ventilation and corridor results, margins, status and legend. Intended for direct connection to a Grasshopper Panel.", Access = GH_ParamAccess.item }, ParamVisibility.Voluntary));
+
+                result.Add(new GH_SAMParam(new global::Grasshopper.Kernel.Parameters.Param_String() { Name = "reportFilePath", NickName = "reportFilePath", Description = "The path the report was actually written to. Empty unless _saveReport_ is True and the write succeeded.", Access = GH_ParamAccess.item }, ParamVisibility.Voluntary));
 
                 return [.. result];
             }
@@ -172,6 +184,21 @@ namespace SAM.Analytical.Grasshopper.Tas
                 return;
             }
 
+            List<OverheatingScenario> overheatingScenarios = null;
+            index = Params.IndexOfInputParam("overheatingScenarios_");
+            if (index != -1)
+            {
+                List<IAnalyticalObject> analyticalObjects = [];
+                if (dataAccess.GetDataList(index, analyticalObjects))
+                {
+                    overheatingScenarios = analyticalObjects.FindAll(x => x is OverheatingScenario).ConvertAll(x => x as OverheatingScenario);
+                    if (overheatingScenarios.Count == 0)
+                    {
+                        overheatingScenarios = null;
+                    }
+                }
+            }
+
             index = Params.IndexOfInputParam("_tM52BuildingCategory");
             string @string = null;
             if (index == -1 || !dataAccess.GetData(index, ref @string) || string.IsNullOrEmpty(@string))
@@ -206,138 +233,146 @@ namespace SAM.Analytical.Grasshopper.Tas
             };
 
             AnalyticalModel analyticalModel_TSD = Analytical.Tas.Convert.ToSAM(path, tSDConversionSettings);
-            AdjacencyCluster adjacencyCluster_TSD = analyticalModel_TSD?.AdjacencyCluster;
-            if(adjacencyCluster_TSD != null)
-            {
-                List<Space> spaces_AnalyticalModel = analyticalModel?.GetSpaces();
-                if(spaces_AnalyticalModel != null)
-                {
-                    List<Space> spaces_TSD = adjacencyCluster_TSD.GetSpaces();
-                    if(spaces_TSD != null)
-                    {
-                        foreach(Space space_TSD in spaces_TSD)
-                        {
-                            Space space_AnalyticalModel = spaces_AnalyticalModel.Find(x => x.Name == space_TSD.Name);
-                            if(space_AnalyticalModel != null)
-                            {
-                                space_TSD.InternalCondition = space_AnalyticalModel.InternalCondition;
-                                adjacencyCluster_TSD.AddObject(space_TSD);
-                            }
-                        }
 
-                        analyticalModel_TSD = new AnalyticalModel(analyticalModel_TSD, adjacencyCluster_TSD);
-                    }
+            //Everything from here on is TM59AssessmentCalculator's - the same sequence this component used to
+            //state inline, now in SAM.Analytical where it can be called and tested. The TSD read above is the
+            //only part that needs TAS. Create.TM59AssessmentCalculator stamps the two series keys the TSD
+            //conversion writes and the provenance this assembly has always stamped, and builds the
+            //SimulationSpaceMap from the zone guid TAS preserves across the round trip.
+            //
+            //That map is why this component no longer matches spaces by NAME. Every flat in a block has a
+            //"Bedroom 2", and the old code restored one flat's internal condition onto another flat's room -
+            //driving the assessment with the wrong occupancy profile and the wrong system, then reporting the
+            //answer as if it belonged to the right room. Where an identity does not resolve the space is now
+            //left out and the reason reported, rather than paired with a same-named room.
+            TM59AssessmentCalculator tM59AssessmentCalculator = analyticalModel_TSD.TM59AssessmentCalculator(analyticalModel);
+            tM59AssessmentCalculator.TM52BuildingCategory = tM52BuildingCategory;
+
+            if (overheatingScenarios != null)
+            {
+                OverheatingScenarioMap overheatingScenarioMap = new(overheatingScenarios, analyticalModel, tM59AssessmentCalculator.SimulationSpaceMap);
+                tM59AssessmentCalculator.VentilationStrategyMap = overheatingScenarioMap.VentilationStrategyMap;
+
+                foreach (string refusal in overheatingScenarioMap.Refusals)
+                {
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, refusal);
                 }
             }
 
-            OverheatingCalculator overheatingCalculator = new (analyticalModel_TSD)
-            {
-                TM52BuildingCategory = tM52BuildingCategory,
-            };
+            tM59AssessmentCalculator.RestoreDesignInternalConditions();
 
-            List<Space> spaces_Result = null;
-            if (spaces == null)
-            {
-                spaces_Result = analyticalModel_TSD.GetSpaces();
-            }
-            else
-            {
-                spaces_Result = [];
-                foreach (Space space in spaces)
-                {
-                    Space space_Result = analyticalModel_TSD.GetSpaces()?.Find(x => x.Name == space.Name);
-                    if (space_Result == null)
-                    {
-                        continue;
-                    }
+            List<string> associationRefusals = [.. tM59AssessmentCalculator.AssociationRefusals];
 
-                    spaces_Result.Add(space_Result);
-                }
+            List<Space> spaces_Result = tM59AssessmentCalculator.Spaces(spaces, zones);
+
+            associationRefusals.AddRange(tM59AssessmentCalculator.AssociationRefusals);
+
+            //Reported as warnings, not swallowed: a space missing from the assessment because its identity could
+            //not be resolved is a gap the user has to be able to see.
+            foreach (string associationRefusal in associationRefusals)
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, associationRefusal);
             }
 
-            if (zones != null)
+            TM59AssessmentResult tM59AssessmentResult = tM59AssessmentCalculator.Calculate(spaces_Result, extended);
+            if (tM59AssessmentResult == null)
             {
-                if (spaces_Result == null)
-                {
-                    spaces_Result = [];
-                }
-
-                foreach (Zone zone in zones)
-                {
-                    Zone zone_Temp = analyticalModel_TSD.GetZones()?.Find(x => x.Name == zone.Name);
-                    if (zone_Temp == null)
-                    {
-                        continue;
-                    }
-
-                    List<Space> spaces_Temp = analyticalModel_TSD.AdjacencyCluster.GetRelatedObjects<Space>(zone_Temp);
-                    if (spaces_Temp == null)
-                    {
-                        continue;
-                    }
-
-                    foreach (Space space_Temp in spaces_Temp)
-                    {
-                        if (spaces_Result.Find(x => x.Name == space_Temp.Name) != null)
-                        {
-                            continue;
-                        }
-
-                        spaces_Result.Add(space_Temp);
-                    }
-                }
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Invalid data");
+                return;
             }
 
-            List<TM59ExtendedResult> tM59ExtendedResults = overheatingCalculator.Calculate_TM59(spaces_Result);
-
-            List<TMResult> tM59MechanicalVentilationResults = tM59ExtendedResults.FindAll(x => x is TM59MechanicalVentilationExtendedResult)?.ConvertAll(x => (TMResult)x);
-            List<TMResult> tM59NaturalVentilationResults = tM59ExtendedResults.FindAll(x => x is TM59NaturalVentilationExtendedResult)?.ConvertAll(x => (TMResult)x);
-            List<TMResult> tM59CorridorResults = tM59ExtendedResults.FindAll(x => x is TM59CorridorExtendedResult)?.ConvertAll(x => (TMResult)x);
-
-            if(!extended)
+            foreach (string refusal in tM59AssessmentResult.VentilationStrategyRefusals)
             {
-                tM59MechanicalVentilationResults = tM59MechanicalVentilationResults?.ConvertAll(x => (x as TM59ExtendedResult)?.Simplify());
-                tM59NaturalVentilationResults = tM59NaturalVentilationResults.ConvertAll(x => (x as TM59ExtendedResult)?.Simplify());
-                tM59CorridorResults = tM59CorridorResults?.ConvertAll(x => (x as TM59ExtendedResult)?.Simplify());
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, refusal);
             }
-
-            IndexedDoubles maxIndoorComfortTemperatures = overheatingCalculator.GetMaxIndoorComfortTemperatures(0, 364);
-            IndexedDoubles minIndoorComfortTemperatures = overheatingCalculator.GetMinIndoorComfortTemperatures(0, 364);
 
             index = Params.IndexOfOutputParam("spaces");
             if (index != -1)
             {
-                dataAccess.SetDataList(index, spaces_Result.ConvertAll(x => new GooSpace(x)));
+                dataAccess.SetDataList(index, tM59AssessmentResult.Spaces.ConvertAll(x => new GooSpace(x)));
             }
 
             index = Params.IndexOfOutputParam("tM59MechanicalVentilationResults");
             if (index != -1)
             {
-                dataAccess.SetDataList(index, tM59MechanicalVentilationResults.ConvertAll(x => new GooResult(x)));
+                dataAccess.SetDataList(index, tM59AssessmentResult.MechanicalVentilationResults.ConvertAll(x => new GooResult(x)));
             }
 
             index = Params.IndexOfOutputParam("tM59NaturalVentilationResults");
             if (index != -1)
             {
-                dataAccess.SetDataList(index, tM59NaturalVentilationResults.ConvertAll(x => new GooResult(x)));
+                dataAccess.SetDataList(index, tM59AssessmentResult.NaturalVentilationResults.ConvertAll(x => new GooResult(x)));
             }
 
             index = Params.IndexOfOutputParam("tM59CorridorResults");
             if (index != -1)
             {
-                dataAccess.SetDataList(index, tM59CorridorResults.ConvertAll(x => new GooResult(x)));
+                dataAccess.SetDataList(index, tM59AssessmentResult.CorridorResults.ConvertAll(x => new GooResult(x)));
             }
 
             index = Params.IndexOfOutputParam("indoorComfortUpperLimitTemperatures");
             if (index != -1)
             {
-                dataAccess.SetDataList(index, maxIndoorComfortTemperatures?.Values);
+                dataAccess.SetDataList(index, tM59AssessmentResult.MaxIndoorComfortTemperatures?.Values);
             }
 
             index = Params.IndexOfOutputParam("indoorComfortLowerLimitTemperatures");
             if (index != -1)
             {
-                dataAccess.SetDataList(index, minIndoorComfortTemperatures?.Values);
+                dataAccess.SetDataList(index, tM59AssessmentResult.MinIndoorComfortTemperatures?.Values);
+            }
+
+            string report = new TM59AssessmentReport(tM59AssessmentResult, path).ToString();
+
+            index = Params.IndexOfOutputParam("report");
+            if (index != -1)
+            {
+                //A view over the result that was just published on the other outputs - it reads their numbers
+                //and verdicts and reformats them. It runs no assessment, so connecting it cannot change them.
+                dataAccess.SetData(index, report);
+            }
+
+            //Voluntary, and off by default: a normal Grasshopper recomputation (opening the file, a solver
+            //pass triggered by an unrelated upstream change) must never create or overwrite a file on disk.
+            //Only an explicit _saveReport_ = True does that, and only to the exact path stated - never a
+            //fallback location, and never a false claim of success.
+            bool saveReport = false;
+            index = Params.IndexOfInputParam("_saveReport_");
+            if (index != -1)
+            {
+                dataAccess.GetData(index, ref saveReport);
+            }
+
+            if (saveReport)
+            {
+                string reportFilePath = null;
+                index = Params.IndexOfInputParam("reportFilePath_");
+                if (index != -1)
+                {
+                    dataAccess.GetData(index, ref reportFilePath);
+                }
+
+                if (string.IsNullOrWhiteSpace(reportFilePath))
+                {
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "_saveReport_ is True but reportFilePath_ is empty. Report not saved.");
+                }
+                else
+                {
+                    try
+                    {
+                        System.IO.File.WriteAllText(reportFilePath, report, System.Text.Encoding.UTF8);
+
+                        int index_ReportFilePath = Params.IndexOfOutputParam("reportFilePath");
+                        if (index_ReportFilePath != -1)
+                        {
+                            dataAccess.SetData(index_ReportFilePath, reportFilePath);
+                        }
+                    }
+                    catch (Exception exception)
+                    {
+                        AddRuntimeMessage(GH_RuntimeMessageLevel.Error, string.Format("Could not save report to '{0}': {1}", reportFilePath, exception.Message));
+                    }
+                }
             }
 
             if (index_Successful != -1)

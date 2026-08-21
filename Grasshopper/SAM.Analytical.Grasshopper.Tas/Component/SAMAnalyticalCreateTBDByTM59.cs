@@ -21,7 +21,7 @@ namespace SAM.Analytical.Grasshopper.Tas
         /// <summary>
         /// The latest version of this component
         /// </summary>
-        public override string LatestComponentVersion => "1.0.2";
+        public override string LatestComponentVersion => "1.0.3";
 
         /// <summary>
         /// Provides an Icon for the component.
@@ -71,6 +71,9 @@ namespace SAM.Analytical.Grasshopper.Tas
                 @boolean = new global::Grasshopper.Kernel.Parameters.Param_Boolean() { Name = "_run", NickName = "_run", Description = "Connect a boolean toggle to run.", Access = GH_ParamAccess.item };
                 @boolean.SetPersistentData(false);
                 result.Add(new GH_SAMParam(@boolean, ParamVisibility.Binding));
+
+                //Appended so every existing input keeps its saved Grasshopper port index.
+                result.Add(new GH_SAMParam(new GooAnalyticalObjectParam() { Name = "overheatingScenarios_", NickName = "overheatingScenarios_", Description = "SAM Part O Overheating Scenarios. When supplied, they are authoritative in the TM59 XML opened by TAS.", Access = GH_ParamAccess.list, Optional = true }, ParamVisibility.Voluntary));
 
                 return [.. result];
             }
@@ -155,6 +158,21 @@ namespace SAM.Analytical.Grasshopper.Tas
                 textMap = Analytical.Query.DefaultInternalConditionTextMap_TM59();
             }
 
+            List<OverheatingScenario> overheatingScenarios = null;
+            index = Params.IndexOfInputParam("overheatingScenarios_");
+            if (index != -1)
+            {
+                List<IAnalyticalObject> analyticalObjects = [];
+                if (dataAccess.GetDataList(index, analyticalObjects))
+                {
+                    overheatingScenarios = analyticalObjects.FindAll(x => x is OverheatingScenario).ConvertAll(x => x as OverheatingScenario);
+                    if (overheatingScenarios.Count == 0)
+                    {
+                        overheatingScenarios = null;
+                    }
+                }
+            }
+
             List<DesignDay> heatingDesignDays = [];
             index = Params.IndexOfInputParam("heatingDesignDays_");
             if (index == -1 || !dataAccess.GetDataList(index, heatingDesignDays) || heatingDesignDays == null || heatingDesignDays.Count == 0)
@@ -188,12 +206,62 @@ namespace SAM.Analytical.Grasshopper.Tas
             bool converted = Analytical.Tas.Convert.ToTBD(analyticalModel, path, weatherData, coolingDesignDays, heatingDesignDays, true);
             if (converted)
             {
-                if (Analytical.Tas.TM59.Modify.TryCreatePath(path, out string path_TM59))
+                bool converted_TM59 = false;
+                string path_TM59 = null;
+
+                if (Analytical.Tas.TM59.Modify.TryCreatePath(path, out path_TM59))
                 {
-                    Analytical.Tas.TM59.Convert.ToXml(analyticalModel, path_TM59, new TM59Manager(textMap));
+                    TM59Manager tM59Manager = new(textMap);
+
+                    if (overheatingScenarios == null)
+                    {
+                        //Compatibility for definitions that predate OverheatingScenario. The existing path is
+                        //preserved; when scenarios are supplied the branch below bypasses this superseded model
+                        //derivation and writes the authoritative strategies instead.
+                        converted_TM59 = Analytical.Tas.TM59.Convert.ToXml(analyticalModel, path_TM59, tM59Manager);
+                    }
+                    else
+                    {
+                        SimulationSpaceMap simulationSpaceMap = SimulationSpaceMap.Identity(analyticalModel.GetSpaces());
+                        OverheatingScenarioMap overheatingScenarioMap = new(overheatingScenarios, analyticalModel, simulationSpaceMap);
+
+                        foreach (string refusal in overheatingScenarioMap.Refusals)
+                        {
+                            AddRuntimeMessage(GH_RuntimeMessageLevel.Error, refusal);
+                        }
+
+                        if (overheatingScenarioMap.IsComplete)
+                        {
+                            converted_TM59 = Analytical.Tas.TM59.Convert.ToXml(analyticalModel, path_TM59, tM59Manager, overheatingScenarioMap.VentilationStrategyMap, out List<string> refusals);
+
+                            foreach (string refusal in refusals)
+                            {
+                                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, refusal);
+                            }
+                        }
+                    }
                 }
 
-                successful = true;
+                //A refused TM59 conversion must not leave a previous run's XML beside the freshly rewritten
+                //TBD - TAS would open ventilation strategies that no longer correspond to this model or its
+                //scenarios. This covers both refusals: an incomplete scenario map (ToXml never called) and a
+                //conversion that refuses after being called (for example, a model that now holds no spaces).
+                if (!converted_TM59 && !string.IsNullOrWhiteSpace(path_TM59) && System.IO.File.Exists(path_TM59))
+                {
+                    //A locked or read-only stale XML cannot be removed. Reported, never thrown out of the
+                    //component - this is already a refused run, and an escaping exception would crash the
+                    //canvas instead of leaving successful = false.
+                    try
+                    {
+                        System.IO.File.Delete(path_TM59);
+                    }
+                    catch (System.Exception exception)
+                    {
+                        AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "The previous TM59 XML '" + path_TM59 + "' could not be removed: " + exception.Message);
+                    }
+                }
+
+                successful = converted_TM59;
 
                 if (includeSAP)
                 {
@@ -211,7 +279,11 @@ namespace SAM.Analytical.Grasshopper.Tas
                         }
                         else
                         {
-                            successful = Analytical.Tas.SAP.Convert.ToFile(analyticalModel, path_SAP, zoneCategory, textMap);
+                            bool converted_SAP = Analytical.Tas.SAP.Convert.ToFile(analyticalModel, path_SAP, zoneCategory, textMap);
+
+                            //SAP is still attempted, but its success cannot turn a refused or failed TM59 XML
+                            //back into overall success.
+                            successful = successful && converted_SAP;
                         }
                         
                     }
