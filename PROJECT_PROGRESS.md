@@ -1,10 +1,10 @@
 # Project Progress
 
 ## Branch
-`feature/partf-terminal-transfer-compliance` (PR: SAM_Tas_Grasshopper#4 against `sow/2026-Q3`)
+`sow/2026-Q3` (SAM_Tas_Grasshopper#4, `feature/partf-terminal-transfer-compliance`, is merged).
 
 ## Last updated
-2026-08-20 - final pre-merge review pass; Codex backlog triaged, two robustness fixes applied.
+2026-09-22 - .NET Framework app.config cleanup merged (first Completed item). Earlier: 2026-08-20 - final pre-merge review pass; Codex backlog triaged, two robustness fixes applied.
 
 ## Current status
 Part O steps 8-9 are exposed for production use. The TSD query component exposes the TM59
@@ -13,6 +13,7 @@ and the gbXML workflow component surfaces SAM_Tas's aperture/schedule diagnostic
 warnings, everything else as remarks). CI build green at `f023594e`.
 
 ## Completed
+- 2026-09-22: [SAM_Tas_Grasshopper#5](https://github.com/SAM-BIM/SAM_Tas_Grasshopper/pull/5) merged as `40d289f8` - deleted `Grasshopper/SAM.Analytical.Grasshopper.Tas.GenOpt/app.config`, `Grasshopper/SAM.Analytical.Grasshopper.Tas/app.config`, `Grasshopper/SAM.Core.Grasshopper.Tas/app.config`, `Grasshopper/SAM.Weather.Grasshopper.Tas/app.config`. These were inert net472-era binding-redirect files in net8.0-windows Library projects. Part of the repo-family .NET Framework `app.config` cleanup: base [SAM#126](https://github.com/SAM-BIM/SAM/pull/126) plus 17 sibling PRs, all merged into `sow/2026-Q3` on 2026-09-22 (SAM first), with their branches deleted. Validated by a full `BuildAlls_v4.bat` clean rebuild (exit 0, 0 errors) and CI build + spdx.
 - Exposed the TM59 verification report on the TSD query component (Tas.TSDQueryTM59Results).
 - Added the Part O diagnostics logging component (TasLogPartODiagnostics), which consumes
   SAM_Tas's `PartODiagnosticLog` and writes a summary JSONL plus an optional hourly companion.
