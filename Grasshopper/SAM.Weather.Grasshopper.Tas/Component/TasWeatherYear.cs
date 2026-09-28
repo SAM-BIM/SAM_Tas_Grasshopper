@@ -21,7 +21,7 @@ namespace SAM.Weather.Grasshopper.Tas
         /// <summary>
         /// Provides an Icon for the component.
         /// </summary>
-        protected override System.Drawing.Bitmap Icon => Resources.SAM_GH_WeatherYearImport;
+        protected override System.Drawing.Bitmap Icon => Resources.SAM_GH_WeatherYearImportTsd;
 
 
         public override GH_Exposure Exposure => GH_Exposure.quarternary;

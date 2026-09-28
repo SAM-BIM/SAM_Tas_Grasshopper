@@ -20,7 +20,7 @@ namespace SAM.Analytical.Grasshopper.Tas.TPD
         /// <summary>
         /// Provides an Icon for the component.
         /// </summary>
-        protected override System.Drawing.Bitmap Icon => Resources.SAM_GH_ResultValue;
+        protected override System.Drawing.Bitmap Icon => Resources.SAM_GH_ResultValueTpd;
 
         /// <summary>
         /// Panel Type

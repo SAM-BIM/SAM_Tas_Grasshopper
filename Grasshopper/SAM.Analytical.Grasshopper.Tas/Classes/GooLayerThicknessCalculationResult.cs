@@ -76,7 +76,7 @@ namespace SAM.Analytical.Grasshopper.Tas
 
         public override GH_Exposure Exposure => GH_Exposure.hidden;
 
-        protected override System.Drawing.Bitmap Icon => Resources.SAM_GH_Result;
+        protected override System.Drawing.Bitmap Icon => Resources.SAM_GH_ResultTcd;
 
         public GooLayerThicknessCalculationResultParam()
             : base(typeof(LayerThicknessCalculationData).Name, typeof(LayerThicknessCalculationResult).Name, typeof(LayerThicknessCalculationResult).FullName.Replace(".", " "), "Params", "SAM")

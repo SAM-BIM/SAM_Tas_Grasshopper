@@ -32,7 +32,7 @@ namespace SAM.Analytical.Grasshopper.Tas.TPD
         /// <summary>
         /// Provides an Icon for the component.
         /// </summary>
-        protected override System.Drawing.Bitmap Icon => Resources.SAM_GH_ThermometerGet;
+        protected override System.Drawing.Bitmap Icon => Resources.SAM_GH_ThermometerGetTpd;
 
 
         /// <summary>

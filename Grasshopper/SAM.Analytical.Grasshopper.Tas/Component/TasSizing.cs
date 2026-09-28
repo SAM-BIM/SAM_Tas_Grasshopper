@@ -25,7 +25,7 @@ namespace SAM.Analytical.Grasshopper.Tas
         /// <summary>
         /// Provides an Icon for the component.
         /// </summary>
-        protected override System.Drawing.Bitmap Icon => Resources.SAM_GH_HeatRun;
+        protected override System.Drawing.Bitmap Icon => Resources.SAM_GH_HeatRunTbd;
 
         public override GH_Exposure Exposure => GH_Exposure.tertiary;
 

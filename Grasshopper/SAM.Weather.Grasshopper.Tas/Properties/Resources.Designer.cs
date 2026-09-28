@@ -133,9 +133,9 @@ namespace SAM.Weather.Grasshopper.Tas.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap SAM_GH_WeatherYearImport {
+        internal static System.Drawing.Bitmap SAM_GH_WeatherYearImportTsd {
             get {
-                object obj = ResourceManager.GetObject("SAM_GH_WeatherYearImport", resourceCulture);
+                object obj = ResourceManager.GetObject("SAM_GH_WeatherYearImportTsd", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

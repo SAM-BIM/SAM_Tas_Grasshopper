@@ -44,7 +44,7 @@ namespace SAM.Analytical.Grasshopper.Tas
         /// <summary>
         /// Provides an Icon for the component.
         /// </summary>
-        protected override System.Drawing.Bitmap Icon => Resources.SAM_GH_LogExport;
+        protected override System.Drawing.Bitmap Icon => Resources.SAM_GH_LogExportTsd;
 
         /// <summary>
         /// Initializes a new instance of the TasLogPartODiagnostics class.

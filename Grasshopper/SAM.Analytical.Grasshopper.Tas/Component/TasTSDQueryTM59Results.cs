@@ -31,7 +31,7 @@ namespace SAM.Analytical.Grasshopper.Tas
         /// <summary>
         /// Provides an Icon for the component.
         /// </summary>
-        protected override System.Drawing.Bitmap Icon => Resources.SAM_GH_ThermometerGet;
+        protected override System.Drawing.Bitmap Icon => Resources.SAM_GH_ThermometerGetTsd;
 
         /// <summary>
         /// Initializes a new instance of the TasTSDQueryTM59Results class.

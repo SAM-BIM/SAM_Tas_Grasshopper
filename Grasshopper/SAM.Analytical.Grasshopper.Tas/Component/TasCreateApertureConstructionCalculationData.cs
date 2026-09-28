@@ -27,7 +27,7 @@ namespace SAM.Analytical.Grasshopper.Tas
         /// <summary>
         /// Provides an Icon for the component.
         /// </summary>
-        protected override Bitmap Icon => Resources.SAM_GH_ApertureConstructionCreate;
+        protected override Bitmap Icon => Resources.SAM_GH_ApertureConstructionCreateTcd;
 
 
         public override GH_Exposure Exposure => GH_Exposure.tertiary;

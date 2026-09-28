@@ -23,7 +23,7 @@ namespace SAM.Core.Grasshopper.Tas
         /// <summary>
         /// Provides an Icon for the component.
         /// </summary>
-        protected override System.Drawing.Bitmap Icon => Resources.SAM_GH_GeometryConvert;
+        protected override System.Drawing.Bitmap Icon => Resources.SAM_GH_GeometryConvertT3d;
 
         public override GH_Exposure Exposure => GH_Exposure.secondary;
 

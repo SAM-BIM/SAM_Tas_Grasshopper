@@ -40,7 +40,7 @@ namespace SAM.Analytical.Grasshopper.Tas.TPD
         /// <summary>
         /// Provides an Icon for the component.
         /// </summary>
-        protected override System.Drawing.Bitmap Icon => Resources.SAM_GH_AirflowSet;
+        protected override System.Drawing.Bitmap Icon => Resources.SAM_GH_AirflowSetTpd;
         
         /// <summary>
         /// Registers all the input parameters for this component.

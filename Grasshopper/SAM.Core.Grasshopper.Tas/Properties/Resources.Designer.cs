@@ -143,9 +143,9 @@ namespace SAM.Core.Grasshopper.Tas.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap SAM_GH_GeometryConvert {
+        internal static System.Drawing.Bitmap SAM_GH_GeometryConvertT3d {
             get {
-                object obj = ResourceManager.GetObject("SAM_GH_GeometryConvert", resourceCulture);
+                object obj = ResourceManager.GetObject("SAM_GH_GeometryConvertT3d", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -153,9 +153,9 @@ namespace SAM.Core.Grasshopper.Tas.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap SAM_GH_Settings {
+        internal static System.Drawing.Bitmap SAM_GH_SettingsCreateTbd {
             get {
-                object obj = ResourceManager.GetObject("SAM_GH_Settings", resourceCulture);
+                object obj = ResourceManager.GetObject("SAM_GH_SettingsCreateTbd", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -163,9 +163,9 @@ namespace SAM.Core.Grasshopper.Tas.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap SAM_GH_SettingsCreate {
+        internal static System.Drawing.Bitmap SAM_GH_SettingsTbd {
             get {
-                object obj = ResourceManager.GetObject("SAM_GH_SettingsCreate", resourceCulture);
+                object obj = ResourceManager.GetObject("SAM_GH_SettingsTbd", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
