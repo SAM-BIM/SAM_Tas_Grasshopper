@@ -64,3 +64,20 @@ Built and validated; ready for review. **Not merged.**
 
 ## Recommended next step
 Review this PR (compare `review/contact_sheet.png`), then merge by the maintainer. After merge, add the `PROJECT_PROGRESS.md` closeout entry on `sow/2026-Q3` with the merge SHA. SAM#166 (the reference design system) remains open.
+
+## Tas domain accent — PROPOSAL (review stage, not integrated)
+Requested refinement for this PR only: show the native EDSL Tas application / file type as a restrained secondary accent.
+**Status: proposal awaiting review.** The icons wired into the C# resources are unchanged. No resource, `.resx`, `Designer.cs` or `.cs` file changed for this step.
+
+- **Accent**: a folded file corner, top-right, in the EDSL colour, with a white separator and one ink hairline. The SAM grammar is untouched: object glyph + SAM-green subject + operation badge (bottom-right, SAM colours). Cross-domain/general objects (GEN) get no accent and stay pixel-identical to the current icons.
+- **Colours**: the official fills of `https://docs.edsl.net/_media/{tas3d,tbd,tsd,tpd}.svg`, cross-checked against the icons embedded in the installed `TAS3D/TBD/TSD/TPD.exe` (within 1–2 levels):
+  - T3D 3D Modeller `#F5DB53`
+  - TBD Building Simulator `#3F9F12`
+  - TSD Results Viewer `#F8744A`
+  - TPD Systems `#1A72C0`
+  
+  EDSL's red frame `#E51A29` is not used, because red means Remove in SAM.
+- **Classification** (`tools/tas_domain.py`, `DOMAIN` table, by class): T3D 4 · TBD 29 · TSD 19 · TPD 15 · GEN 37 = 104. Rule: the Tas application whose document the component primarily reads or writes as its subject. Evidence came from the Tas document types in each source file, the original icon chosen by the authors, and the SAM_Tas library call. 9 ambiguous cases are annotated in `AMBIGUOUS` and on the sheets.
+- **Manifest**: new fields `tas_domain`, `review_id` (`TAS-<domain>-NNN`), `proposed_icon_id`, `proposed_resource`, `domain_note`. The integrated `icon_id`/`resource` are unchanged.
+- **Review output** (`review/tas/`): `palette.png`, `contact_T3D|TBD|TSD|TPD|GEN.png`, `master.png`, `before_after.png`. Proposed icons are in `tas/svg` and `tas/png/24`: 76 distinct, identical-pixel groups 0. The TSD and TPD TM59 queries were identical before and are now distinguished.
+- **Next step after approval**: integrate `proposed_resource` into the resources and Icon getters (`integrate.py` with the proposed ids), rebuild with VS MSBuild, and re-run `check_source.py`, `check_assemblies.py` and `tests/GhIconTest`.
