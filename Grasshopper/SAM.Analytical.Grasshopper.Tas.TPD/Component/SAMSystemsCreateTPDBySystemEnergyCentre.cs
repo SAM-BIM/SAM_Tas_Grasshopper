@@ -30,7 +30,7 @@ namespace SAM.Analytical.Grasshopper.Tas.TPD
         /// <summary>
         /// Provides an Icon for the component.
         /// </summary>
-        protected override System.Drawing.Bitmap Icon => Resources.SAM_TasTPD3;
+        protected override System.Drawing.Bitmap Icon => Resources.SAM_GH_EnergyCentreExport;
 
         public override GH_Exposure Exposure => GH_Exposure.quinary;
 

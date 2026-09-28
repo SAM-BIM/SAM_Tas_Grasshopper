@@ -33,7 +33,7 @@ namespace SAM.Core.Grasshopper.Tas
 
         public override GH_Exposure Exposure => GH_Exposure.hidden;
 
-        protected override System.Drawing.Bitmap Icon => Resources.SAM_Small;
+        protected override System.Drawing.Bitmap Icon => Resources.SAM_GH_Settings;
 
         public GooSurfaceOutputSpecParam()
             : base(typeof(SurfaceOutputSpec).Name, typeof(SurfaceOutputSpec).Name, typeof(SurfaceOutputSpec).FullName.Replace(".", " "), "Params", "SAM")

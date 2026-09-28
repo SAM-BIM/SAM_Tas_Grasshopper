@@ -48,7 +48,7 @@ namespace SAM.Analytical.Grasshopper.Tas.TPD
         /// Provides an Icon for the component.
         /// </summary>
         
-        protected override System.Drawing.Bitmap Icon => Resources.SAM_TasTPD3;
+        protected override System.Drawing.Bitmap Icon => Resources.SAM_GH_ZoneSet;
         
         /// <summary>
         /// Registers all the input parameters for this component.

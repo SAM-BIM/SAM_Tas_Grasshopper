@@ -119,5 +119,25 @@ namespace SAM.Weather.Grasshopper.Tas.Properties {
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap SAM_GH_WeatherDataCreate {
+            get {
+                object obj = ResourceManager.GetObject("SAM_GH_WeatherDataCreate", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap SAM_GH_WeatherYearImport {
+            get {
+                object obj = ResourceManager.GetObject("SAM_GH_WeatherYearImport", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
     }
 }

@@ -107,7 +107,7 @@ namespace SAM.Analytical.Grasshopper.Tas.GenOpt
 
         public override GH_Exposure Exposure => GH_Exposure.hidden;
 
-        protected override System.Drawing.Bitmap Icon => Resources.SAM_GenOpt;
+        protected override System.Drawing.Bitmap Icon => Resources.SAM_GH_Value;
 
         public GooParameterParam()
             : base(typeof(Parameter).Name, typeof(Parameter).Name, typeof(Parameter).FullName.Replace(".", " "), "Params", "SAM")

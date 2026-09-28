@@ -49,7 +49,7 @@ namespace SAM.Core.Grasshopper.Tas.UKBR
 
         public override GH_Exposure Exposure => GH_Exposure.hidden;
 
-        protected override System.Drawing.Bitmap Icon => Resources.SAM_T3D3;
+        protected override System.Drawing.Bitmap Icon => Resources.SAM_GH_File;
 
         public GooUKBRFileParam()
             : base(typeof(UKBRFile).Name, typeof(UKBRFile).Name, typeof(UKBRFile).FullName.Replace(".", " "), "Params", "SAM")

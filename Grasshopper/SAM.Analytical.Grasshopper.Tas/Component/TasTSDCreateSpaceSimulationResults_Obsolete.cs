@@ -27,7 +27,7 @@ namespace SAM.Analytical.Grasshopper.Tas.Obsolete
         /// <summary>
         /// Provides an Icon for the component.
         /// </summary>
-        protected override System.Drawing.Bitmap Icon => Resources.SAM_TasTBD3;
+        protected override System.Drawing.Bitmap Icon => Resources.SAM_GH_ResultCreate;
 
         /// <summary>
         /// Initializes a new instance of the SAM_point3D class.
