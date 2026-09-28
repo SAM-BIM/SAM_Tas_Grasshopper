@@ -233,7 +233,8 @@ namespace SAM.Analytical.Grasshopper.Tas
 
             string directory = System.IO.Path.GetDirectoryName(path_TSD);
             string fileName = System.IO.Path.GetFileNameWithoutExtension(path_TSD);
-            string iteration = overheatingScenarios.Count != 0 ? overheatingScenarios[0].Iteration.ToString() : "Undefined";
+            //The run's iteration, read from every scenario (a mixed building is "Mixed") - never the first scenario's.
+            string iteration = PartODiagnosticLog.RunPartOIteration(overheatingScenarios) ?? "Undefined";
             //Millisecond precision: two runs within the same second for the same TSD and iteration would
             //otherwise compute the same path and the second overwrite the first, losing one run's records.
             string timestamp = runTimestampUtc.ToString("yyyyMMdd-HHmmssfff");
