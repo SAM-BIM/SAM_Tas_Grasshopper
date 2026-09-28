@@ -81,3 +81,6 @@ Requested refinement for this PR only: show the native EDSL Tas application / fi
 - **Manifest**: new fields `tas_domain`, `review_id` (`TAS-<domain>-NNN`), `proposed_icon_id`, `proposed_resource`, `domain_note`. The integrated `icon_id`/`resource` are unchanged.
 - **Review output** (`review/tas/`): `palette.png`, `contact_T3D|TBD|TSD|TPD|GEN.png`, `master.png`, `before_after.png`. Proposed icons are in `tas/svg` and `tas/png/24`: 76 distinct, identical-pixel groups 0. The TSD and TPD TM59 queries were identical before and are now distinguished.
 - **Next step after approval**: integrate `proposed_resource` into the resources and Icon getters (`integrate.py` with the proposed ids), rebuild with VS MSBuild, and re-run `check_source.py`, `check_assemblies.py` and `tests/GhIconTest`.
+
+## SPDX header policy (CI `spdx-check`)
+The repository SPDX check requires the LGPL-3.0-or-later SPDX line and the copyright line in every `.cs` file a PR changes. The icon-token swaps touched 62 older files that predated the policy (components, `Resources.Designer.cs`), and the kit test `IconTests.cs` had no header. The standard 2-line header was added to them; nothing else changed. `tools/check_source.py` accepts exactly this header as the only non-icon addition and compares against the merge base.
