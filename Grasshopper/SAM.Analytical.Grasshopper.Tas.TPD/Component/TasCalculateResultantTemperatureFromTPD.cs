@@ -22,7 +22,7 @@ namespace SAM.Analytical.Grasshopper.Tas.TPD
         /// <summary>
         /// The latest version of this component
         /// </summary>
-        public override string LatestComponentVersion => "1.0.1";
+        public override string LatestComponentVersion => "1.0.2";
 
         /// <summary>
         /// Provides an Icon for the component.
@@ -112,7 +112,20 @@ namespace SAM.Analytical.Grasshopper.Tas.TPD
                 return;
             }
 
-            bool successful = Analytical.Tas.TPD.Modify.CalculateResultantTemperature(path_TPD, out string path_TBD, out string path_TSD);
+            //The authoritative TPD-full route. The second simulation is deliberate: a TPD run models the real
+            //system but produces no resultant temperature, so this pays for a second TAS run on a COPY of the TBD.
+            //
+            //A refusal is FINAL and is reported as such. There is no fall back to Tas.TPDQueryTM59Results, which
+            //synthesises a resultant temperature from a single pass - reporting that in place of a simulated
+            //result would present an approximation as the real thing.
+            bool successful = Analytical.Tas.TPD.Modify.CalculateResultantTemperature(path_TPD, Analytical.Tas.TPD.ResultantTemperatureTransfer.ZoneTemperatureToThermostatLimits, out string path_TBD, out string path_TSD, out List<string> refusals);
+
+            //Previously this returned false with nothing said, so a user could not tell a missing companion TBD
+            //from a failed simulation.
+            foreach (string refusal in refusals)
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, refusal);
+            }
 
             if (index_successful != -1)
             {

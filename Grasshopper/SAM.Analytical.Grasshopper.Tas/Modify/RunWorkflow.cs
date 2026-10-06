@@ -3,6 +3,7 @@
 
 using SAM.Analytical.Tas;
 using SAM.Core.Windows.WPF;
+using System.Collections.Generic;
 using System.Threading;
 
 namespace SAM.Analytical.Grasshopper.Tas
@@ -17,6 +18,16 @@ namespace SAM.Analytical.Grasshopper.Tas
         public static AnalyticalModel RunWorkflow(this AnalyticalModel analyticalModel, WorkflowSettings workflowSettings, out bool cancelled)
         {
             return RunWorkflow(analyticalModel, workflowSettings, CancellationToken.None, out cancelled);
+        }
+
+        /// <summary>
+        /// The same run, also returning what the workflow wants the caller to know -
+        /// <see cref="WorkflowCalculator.Notes"/>, which is where aperture-type skips and schedule
+        /// refusals are reported instead of being silently dropped.
+        /// </summary>
+        public static AnalyticalModel RunWorkflow(this AnalyticalModel analyticalModel, WorkflowSettings workflowSettings, out bool cancelled, out List<string> notes)
+        {
+            return RunWorkflow(analyticalModel, workflowSettings, CancellationToken.None, out cancelled, out notes);
         }
 
         /// <summary>
@@ -38,7 +49,13 @@ namespace SAM.Analytical.Grasshopper.Tas
         /// </summary>
         public static AnalyticalModel RunWorkflow(this AnalyticalModel analyticalModel, WorkflowSettings workflowSettings, CancellationToken externalCancellationToken, out bool cancelled)
         {
+            return RunWorkflow(analyticalModel, workflowSettings, externalCancellationToken, out cancelled, out List<string> _);
+        }
+
+        public static AnalyticalModel RunWorkflow(this AnalyticalModel analyticalModel, WorkflowSettings workflowSettings, CancellationToken externalCancellationToken, out bool cancelled, out List<string> notes)
+        {
             cancelled = false;
+            notes = [];
 
             if (analyticalModel == null)
             {
@@ -87,6 +104,8 @@ namespace SAM.Analytical.Grasshopper.Tas
                     };
 
                     result = workflowCalculator.Calculate(analyticalModel);
+
+                    notes.AddRange(workflowCalculator.Notes);
                 }
                 catch (System.OperationCanceledException)
                 {

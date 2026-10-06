@@ -1,4 +1,7 @@
-﻿using System;
+﻿// SPDX-License-Identifier: LGPL-3.0-or-later
+// Copyright (c) 2020-2026 Michal Dengusiak & Jakub Ziolkowski and contributors
+
+using System;
 using System.Drawing;
 using Grasshopper.Kernel;
 
@@ -33,7 +36,12 @@ namespace SAM.Core.Grasshopper.Tas
         {
             get
             {
-                return new Guid("41efcf7f-7fc8-4ed2-85d0-d116b6c30e8b");
+                // Was accidentally identical to SAM.Analytical.Grasshopper.Tas's plugin Id
+                // (copy-paste in the original 2020 commit that added both AssemblyInfo.cs
+                // files - see git history). Regenerated here since Analytical is the
+                // primary/larger TAS assembly (66 components vs. this project's 3) and
+                // keeps its historical Id; this was the accidental duplicate.
+                return new Guid("4ef141f3-2d5a-4a38-9c17-94fa4b3c0eb4");
             }
         }
 

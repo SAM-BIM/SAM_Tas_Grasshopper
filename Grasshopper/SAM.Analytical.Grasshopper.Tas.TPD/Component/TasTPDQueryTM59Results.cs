@@ -3,7 +3,6 @@
 
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
-using System.Text.Json.Nodes;
 using SAM.Analytical.Grasshopper.Tas.TPD.Properties;
 using SAM.Analytical.Systems;
 using SAM.Analytical.Tas;
@@ -26,7 +25,7 @@ namespace SAM.Analytical.Grasshopper.Tas.TPD
         /// <summary>
         /// The latest version of this component
         /// </summary>
-        public override string LatestComponentVersion => "1.0.1";
+        public override string LatestComponentVersion => "1.0.2";
 
         public override GH_Exposure Exposure => GH_Exposure.quinary;
 
@@ -74,6 +73,9 @@ namespace SAM.Analytical.Grasshopper.Tas.TPD
                 boolean = new global::Grasshopper.Kernel.Parameters.Param_Boolean() { Name = "_run", NickName = "_run", Description = "Connect a boolean toggle to run.", Access = GH_ParamAccess.item };
                 boolean.SetPersistentData(false);
                 result.Add(new GH_SAMParam(boolean, ParamVisibility.Binding));
+
+                //Appended so every existing input keeps its saved Grasshopper port index.
+                result.Add(new GH_SAMParam(new GooAnalyticalObjectParam() { Name = "overheatingScenarios_", NickName = "overheatingScenarios_", Description = "SAM Part O Overheating Scenarios. When supplied, they are authoritative over the TM59 ventilation criterion.", Access = GH_ParamAccess.list, Optional = true }, ParamVisibility.Voluntary));
 
                 return [.. result];
             }
@@ -200,13 +202,32 @@ namespace SAM.Analytical.Grasshopper.Tas.TPD
                 }
             }
 
+            //Optional, and appended after the existing inputs. When scenarios are supplied they are authoritative
+            //over the ventilation criterion; when absent the documented legacy derivation stands, so a saved
+            //definition behaves as it did.
+            List<OverheatingScenario> overheatingScenarios = null;
+            index = Params.IndexOfInputParam("overheatingScenarios_");
+            if (index != -1)
+            {
+                List<IAnalyticalObject> analyticalObjects = [];
+                if (dataAccess.GetDataList(index, analyticalObjects))
+                {
+                    overheatingScenarios = analyticalObjects.FindAll(x => x is OverheatingScenario).ConvertAll(x => x as OverheatingScenario);
+                    if (overheatingScenarios.Count == 0)
+                    {
+                        overheatingScenarios = null;
+                    }
+                }
+            }
+
+            //Step 1 of 3, and the only part that needs TAS: read the TPD's per-zone system results, and the
+            //companion TSD beside it for the radiant series.
             List<SystemSpaceResult> systemSpaceResults = Analytical.Tas.TPD.Convert.ToSAM_SpaceSystemResults(path_TPD, out string path_TSD);
             if(systemSpaceResults is null)
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Invalid data");
                 return;
             }
-
 
             TSDConversionSettings tSDConversionSettings = new ()
             {
@@ -218,178 +239,125 @@ namespace SAM.Analytical.Grasshopper.Tas.TPD
             };
 
             AnalyticalModel analyticalModel_TSD = Analytical.Tas.Convert.ToSAM(path_TSD, tSDConversionSettings);
-            AdjacencyCluster adjacencyCluster_TSD = analyticalModel_TSD?.AdjacencyCluster;
-            if(adjacencyCluster_TSD != null)
+            if (analyticalModel_TSD is null)
             {
-                List<Space> spaces_AnalyticalModel = analyticalModel?.GetSpaces();
-                if(spaces_AnalyticalModel != null)
-                {
-                    List<Space> spaces_TSD = adjacencyCluster_TSD.GetSpaces();
-                    if(spaces_TSD != null)
-                    {
-                        foreach(Space space_TSD in spaces_TSD)
-                        {
-                            Space space_AnalyticalModel = spaces_AnalyticalModel.Find(x => x.Name == space_TSD.Name);
-                            if(space_AnalyticalModel != null)
-                            {
-                                space_TSD.InternalCondition = space_AnalyticalModel.InternalCondition;
-                                adjacencyCluster_TSD.AddObject(space_TSD);
-                            }
-                        }
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Invalid data");
+                return;
+            }
 
-                        analyticalModel_TSD = new AnalyticalModel(analyticalModel_TSD, adjacencyCluster_TSD);
-                    }
+            //Step 2 of 3: the TAS-specific preparation, which used to be stated inline here.
+            //
+            //THIS IS THE LEGACY, APPROXIMATE TPD ROUTE. It runs ONE simulation and SYNTHESISES the resultant
+            //temperature as the mean of the TSD's mean radiant temperature and the TPD's zone temperature. It is
+            //NOT the authoritative TPD-full route: that one
+            //(Analytical.Tas.TPD.Modify.CalculateResultantTemperature) deliberately pays for a SECOND TAS
+            //simulation on a COPY of the TBD and reads a real resultant temperature out of the second TSD. The two
+            //are kept separately callable on purpose, and a failure of that route must never arrive here - a
+            //synthesised series reported in place of a simulated one is an approximation wearing the real thing's
+            //clothes.
+            //
+            //The arithmetic lives in SAM.Analytical.Tas.TPD and not in TM59AssessmentCalculator, because averaging
+            //a radiant temperature with a systems-model zone temperature is a TAS accommodation for a series TPD
+            //does not produce. The assessment must stay engine-neutral: preparation differs, assessment does not.
+            //
+            //It also no longer matches TPD results to spaces by NAME. Every flat in a block has a "Bedroom 2", and
+            //the old inline code took the first result whose name matched - silently reporting one dwelling's
+            //system results against another dwelling's room.
+            Analytical.Tas.TPD.ApproximateResultantTemperatureMap approximateResultantTemperatureMap = new(
+                analyticalModel_TSD,
+                systemSpaceResults,
+                Analytical.Tas.Query.SimulationSpaceKey,
+                Analytical.Tas.SpaceDataType.MeanRadiantTemperature.Text(),
+                Analytical.Tas.SpaceDataType.ResultantTemperature.Text());
+
+            foreach (string refusal in approximateResultantTemperatureMap.Refusals)
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, refusal);
+            }
+
+            //Checked rather than assumed: the preparation returns no model on its own refusal branches, and
+            //dereferencing that would surface a NullReferenceException where a refusal was already reported.
+            if (!approximateResultantTemperatureMap.IsSupported)
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The TPD preparation produced no model to assess.");
+                return;
+            }
+
+            //Step 3 of 3: the common, engine-neutral assessment - the same one the TSD-simple route runs. This
+            //component no longer holds its own copy of the TM59 recipe.
+            TM59AssessmentCalculator tM59AssessmentCalculator = approximateResultantTemperatureMap.AnalyticalModel.TM59AssessmentCalculator(analyticalModel);
+            tM59AssessmentCalculator.TM52BuildingCategory = tM52BuildingCategory;
+
+            if (overheatingScenarios != null)
+            {
+                OverheatingScenarioMap overheatingScenarioMap = new(overheatingScenarios, analyticalModel, tM59AssessmentCalculator.SimulationSpaceMap);
+                tM59AssessmentCalculator.VentilationStrategyMap = overheatingScenarioMap.VentilationStrategyMap;
+
+                foreach (string refusal in overheatingScenarioMap.Refusals)
+                {
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, refusal);
                 }
             }
 
-            List<Space> spaces_TSD_Temp = analyticalModel_TSD?.GetSpaces();
-            if(spaces_TSD_Temp != null)
+            tM59AssessmentCalculator.RestoreDesignInternalConditions();
+
+            List<string> associationRefusals = [.. tM59AssessmentCalculator.AssociationRefusals];
+
+            List<Space> spaces_Result = tM59AssessmentCalculator.Spaces(spaces, zones);
+
+            associationRefusals.AddRange(tM59AssessmentCalculator.AssociationRefusals);
+
+            foreach (string associationRefusal in associationRefusals)
             {
-                foreach (Space space_TSD_Temp in spaces_TSD_Temp)
-                {
-                    SystemSpaceResult systemSpaceResult = systemSpaceResults.Find(x => x.Name == space_TSD_Temp.Name);
-                    if(systemSpaceResult is null)
-                    {
-                        continue;
-                    }
-
-                    string name_MeanRadiantTemperature = Analytical.Tas.SpaceDataType.MeanRadiantTemperature.Text();
-
-                    ParameterSet parameterSet = space_TSD_Temp.GetParameterSets().Find(x => x.Contains(name_MeanRadiantTemperature));
-                    if(parameterSet is not null)
-                    {
-                        JsonArray jArray = parameterSet?.ToObject(name_MeanRadiantTemperature) as JsonArray;
-                        if(jArray != null)
-                        {
-                            IndexedDoubles indexedDoubles = systemSpaceResult[Analytical.Systems.SpaceDataType.ZoneTemperature.ToString()];
-                            if (indexedDoubles is not null)
-                            {
-                                JsonArray jArray_ResultantTemperature = [];
-
-                                List<double> values = indexedDoubles.GetValues(new Range<int>(0, 8760), true);
-                                for (int i = 0; i < jArray.Count; i++)
-                                {
-                                    jArray_ResultantTemperature.Add(((double)jArray[i] + values[i]) / 2);
-                                }
-
-                                parameterSet.Add(Analytical.Tas.SpaceDataType.ResultantTemperature.Text(), jArray_ResultantTemperature);
-
-                                space_TSD_Temp.Add(parameterSet);
-                                analyticalModel_TSD.AddSpace(space_TSD_Temp);
-                            }
-                        }
-                    }
-                }
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, associationRefusal);
             }
 
-            OverheatingCalculator overheatingCalculator = new (analyticalModel_TSD)
+            TM59AssessmentResult tM59AssessmentResult = tM59AssessmentCalculator.Calculate(spaces_Result, extended);
+            if (tM59AssessmentResult == null)
             {
-                TM52BuildingCategory = tM52BuildingCategory,
-            };
-
-            List<Space> spaces_Result = null;
-            if (spaces == null)
-            {
-                spaces_Result = analyticalModel_TSD.GetSpaces();
-            }
-            else
-            {
-                spaces_Result = [];
-                foreach (Space space in spaces)
-                {
-                    Space space_Result = analyticalModel_TSD.GetSpaces()?.Find(x => x.Name == space.Name);
-                    if (space_Result == null)
-                    {
-                        continue;
-                    }
-
-                    spaces_Result.Add(space_Result);
-                }
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Invalid data");
+                return;
             }
 
-            if (zones != null)
+            foreach (string refusal in tM59AssessmentResult.VentilationStrategyRefusals)
             {
-                if (spaces_Result == null)
-                {
-                    spaces_Result = [];
-                }
-
-                foreach (Zone zone in zones)
-                {
-                    Zone zone_Temp = analyticalModel_TSD.GetZones()?.Find(x => x.Name == zone.Name);
-                    if (zone_Temp == null)
-                    {
-                        continue;
-                    }
-
-                    List<Space> spaces_Temp = analyticalModel_TSD.AdjacencyCluster.GetRelatedObjects<Space>(zone_Temp);
-                    if (spaces_Temp == null)
-                    {
-                        continue;
-                    }
-
-                    foreach (Space space_Temp in spaces_Temp)
-                    {
-                        if (spaces_Result.Find(x => x.Name == space_Temp.Name) != null)
-                        {
-                            continue;
-                        }
-
-                        spaces_Result.Add(space_Temp);
-                    }
-                }
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, refusal);
             }
-
-            List<TM59ExtendedResult> tM59ExtendedResults = overheatingCalculator.Calculate_TM59(spaces_Result);
-
-            List<TMResult> tM59MechanicalVentilationResults = tM59ExtendedResults.FindAll(x => x is TM59MechanicalVentilationExtendedResult)?.ConvertAll(x => (TMResult)x);
-            List<TMResult> tM59NaturalVentilationResults = tM59ExtendedResults.FindAll(x => x is TM59NaturalVentilationExtendedResult)?.ConvertAll(x => (TMResult)x);
-            List<TMResult> tM59CorridorResults = tM59ExtendedResults.FindAll(x => x is TM59CorridorExtendedResult)?.ConvertAll(x => (TMResult)x);
-
-            if(!extended)
-            {
-                tM59MechanicalVentilationResults = tM59MechanicalVentilationResults?.ConvertAll(x => (x as TM59ExtendedResult)?.Simplify());
-                tM59NaturalVentilationResults = tM59NaturalVentilationResults.ConvertAll(x => (x as TM59ExtendedResult)?.Simplify());
-                tM59CorridorResults = tM59CorridorResults?.ConvertAll(x => (x as TM59ExtendedResult)?.Simplify());
-            }
-
-            IndexedDoubles maxIndoorComfortTemperatures = overheatingCalculator.GetMaxIndoorComfortTemperatures(0, 364);
-            IndexedDoubles minIndoorComfortTemperatures = overheatingCalculator.GetMinIndoorComfortTemperatures(0, 364);
 
             index = Params.IndexOfOutputParam("spaces");
             if (index != -1)
             {
-                dataAccess.SetDataList(index, spaces_Result.ConvertAll(x => new GooSpace(x)));
+                dataAccess.SetDataList(index, tM59AssessmentResult.Spaces.ConvertAll(x => new GooSpace(x)));
             }
 
             index = Params.IndexOfOutputParam("tM59MechanicalVentilationResults");
             if (index != -1)
             {
-                dataAccess.SetDataList(index, tM59MechanicalVentilationResults.ConvertAll(x => new GooResult(x)));
+                dataAccess.SetDataList(index, tM59AssessmentResult.MechanicalVentilationResults.ConvertAll(x => new GooResult(x)));
             }
 
             index = Params.IndexOfOutputParam("tM59NaturalVentilationResults");
             if (index != -1)
             {
-                dataAccess.SetDataList(index, tM59NaturalVentilationResults.ConvertAll(x => new GooResult(x)));
+                dataAccess.SetDataList(index, tM59AssessmentResult.NaturalVentilationResults.ConvertAll(x => new GooResult(x)));
             }
 
             index = Params.IndexOfOutputParam("tM59CorridorResults");
             if (index != -1)
             {
-                dataAccess.SetDataList(index, tM59CorridorResults.ConvertAll(x => new GooResult(x)));
+                dataAccess.SetDataList(index, tM59AssessmentResult.CorridorResults.ConvertAll(x => new GooResult(x)));
             }
 
             index = Params.IndexOfOutputParam("indoorComfortUpperLimitTemperatures");
             if (index != -1)
             {
-                dataAccess.SetDataList(index, maxIndoorComfortTemperatures?.Values);
+                dataAccess.SetDataList(index, tM59AssessmentResult.MaxIndoorComfortTemperatures?.Values);
             }
 
             index = Params.IndexOfOutputParam("indoorComfortLowerLimitTemperatures");
             if (index != -1)
             {
-                dataAccess.SetDataList(index, minIndoorComfortTemperatures?.Values);
+                dataAccess.SetDataList(index, tM59AssessmentResult.MinIndoorComfortTemperatures?.Values);
             }
 
             if (index_Successful != -1)
