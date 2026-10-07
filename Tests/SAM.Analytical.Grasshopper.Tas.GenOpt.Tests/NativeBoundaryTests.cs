@@ -237,7 +237,7 @@ namespace SAM.Analytical.Grasshopper.Tas.GenOpt.Tests
             yield return new TestCaseData(new ParametricAlgorithm(), new[] { GoldenSectionParameter }, typeof(NotSupportedException), "Not supported by the native route: ").SetName("Refused_Parametric");
             yield return new TestCaseData(new NelderMeadONeillcsAlgorithm(), new[] { GoldenSectionParameter }, typeof(NotSupportedException), "Not supported by the native route: ").SetName("Refused_NelderMead");
             yield return new TestCaseData(new MeshAlgorithm(), new[] { GoldenSectionParameter }, typeof(NotSupportedException), "Not supported by the native route: ").SetName("Refused_Mesh");
-            yield return new TestCaseData(new GPSCoordinateSearchAlgorithm(), new[] { HookeJeevesParameter }, typeof(GenOptCompatibilityException), "Invalid GenOpt settings for the native route: ").SetName("Refused_GPSCoordinateSearch");
+            yield return new TestCaseData(new GPSCoordinateSearchAlgorithm(), new[] { HookeJeevesParameter }, typeof(NotSupportedException), "Not supported by the native route: ").SetName("Refused_GPSCoordinateSearch");
             yield return new TestCaseData(new GPSHookeJeevesAlgorithm { MeshSizeDivider = 0 }, new[] { HookeJeevesParameter }, typeof(GenOptCompatibilityException), "Invalid GenOpt settings for the native route: ").SetName("Refused_InvalidMesh");
             yield return new TestCaseData(new GoldenSectionAlgorithm(), new[] { GoldenSectionParameter, new NumberParameter { Name = "Other", Initial = 0, Min = 0, Max = 1, Step = 1 } }, typeof(GenOptCompatibilityException), "Invalid GenOpt settings for the native route: ").SetName("Refused_GoldenSectionWithTwoParameters");
         }
