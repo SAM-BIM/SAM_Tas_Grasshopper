@@ -112,6 +112,11 @@ namespace SAM.Analytical.Grasshopper.Tas
                 @boolean.SetPersistentData(false);
                 result.Add(new GH_SAMParam(@boolean, ParamVisibility.Binding));
 
+                //Appended last on purpose: existing definitions keep their inputs in the same positions.
+                global::Grasshopper.Kernel.Parameters.Param_String @string = new global::Grasshopper.Kernel.Parameters.Param_String() { Name = "T3DRoute_", NickName = "T3DRoute_", Description = "T3D generation route. GbXML = existing/default workflow; Direct = direct SAM-to-T3D importer.\nAccepted values: GbXML, Direct (case-insensitive). Default is GbXML. With Direct the gbXML file is ignored (_pathgbXML is still required by this component).", Access = GH_ParamAccess.item, Optional = true };
+                @string.SetPersistentData(nameof(T3DRoute.GbXML));
+                result.Add(new GH_SAMParam(@string, ParamVisibility.Default));
+
                 return result.ToArray();
             }
         }
@@ -331,6 +336,26 @@ namespace SAM.Analytical.Grasshopper.Tas
                 }
             }
 
+            //Absent (input not on this component, or no value) = GbXML. Only the word "Direct" selects Direct;
+            //an unrecognised value falls back to GbXML with a warning and never to Direct.
+            T3DRoute t3DRoute = T3DRoute.GbXML;
+            index = Params.IndexOfInputParam("T3DRoute_");
+            if (index != -1)
+            {
+                string t3DRouteText = null;
+                if (!dataAccess.GetData(index, ref t3DRouteText))
+                {
+                    t3DRouteText = null;
+                }
+
+                if (!SAM.Analytical.Grasshopper.Tas.Query.TryGetT3DRoute(t3DRouteText, out t3DRoute))
+                {
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, string.Format("Unrecognised T3DRoute_ value '{0}'. Use GbXML or Direct. Falling back to GbXML.", t3DRouteText));
+                }
+            }
+
+            AddRuntimeMessage(GH_RuntimeMessageLevel.Remark, string.Format("T3D route: {0}.", t3DRoute));
+
             WorkflowSettings workflowSettings = new WorkflowSettings()
             {
                 Path_TBD = path_TBD,
@@ -348,7 +373,8 @@ namespace SAM.Analytical.Grasshopper.Tas
                 SimulateFrom = 1,
                 SimulateTo = 365,
                 RemoveExistingTBD = removeExistingTBD,
-                UpdateWindowPositionType = updateWindowPositionType
+                UpdateWindowPositionType = updateWindowPositionType,
+                T3DRoute = t3DRoute
             };
 
             analyticalModel = Modify.RunWorkflow(analyticalModel, workflowSettings, out bool cancelled, out System.Collections.Generic.List<string> notes);
