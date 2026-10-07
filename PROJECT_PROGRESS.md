@@ -6,11 +6,13 @@
 
 ## Last updated
 
-2026-10-06 (Q4 operational cleanup).
+2026-10-07 (PR #10 merged: T3D route selector). Earlier: 2026-10-06 (Q4 operational cleanup).
 
 ## Current status
 
-Q4 branch cut from `master` `b4fce7c8`, which is the exact commit pinned in SAM_Deploy's frozen Q3 baseline (`v20261006.1`). Bootstrap added only internal docs (this file, `AGENTS.md`) and a narrow CI branch-reference update (see Decisions). No product source changed. No Q4 product work has started.
+Q4 branch cut from `master` `b4fce7c8`, which is the exact commit pinned in SAM_Deploy's frozen Q3 baseline (`v20261006.1`). Bootstrap added only internal docs (this file, `AGENTS.md`) and a narrow CI branch-reference update (see Decisions).
+
+First Q4 product change merged 2026-10-07: **PR #10** exposes SAM_Tas `WorkflowSettings.T3DRoute` as a Boolean `T3DRoute_` input on `SAMAnalytical.WorkflowgbXML` (see "T3D route selector" below).
 
 ## Q4 priorities
 
@@ -46,7 +48,7 @@ Not yet set by the owner. Record them here at the first Q4 planning pass. Known 
 
 ## Next step
 
-- Owner to set Q4 priorities; then start the first Q4 task from this branch.
+- Owner to set Q4 priorities and decide PR #8; the T3D route selector (PR #10) is merged and closed.
 
 ## Q4 operational cleanup (2026-10-06)
 
@@ -55,6 +57,35 @@ Not yet set by the owner. Record them here at the first Q4 planning pass. Known 
 - Checked, no action: the `github.repository_owner == 'SAM-BIM'` build guard (intentional; its comment names HoareLea only to explain why the guard exists), no CODEOWNERS file in this repository (separate lineage), and workflow secrets (no HoareLea-named secret). The local `upstream` (HoareLea) remote is preserved.
 - Carry-over: **SAM Grasshopper icon redesign - PR #8** (`feature/sam-gh-icon-redesign` @ `f12a6af2`) was retargeted from `sow/2026-Q3` to `sow/2026-Q4` on 2026-10-06 (not merged). Its head sits directly on the Q3 tip `9ddf8ff6`, which is an ancestor of `master`/`sow/2026-Q4`, so the PR is exactly its 8 icon-only commits (517 files) and is mergeable.
 - Full cross-repository record, migration table and owner decisions: `SAM_Deploy:sow/2026-Q4` `PROJECT_PROGRESS.md`.
+
+## T3D route selector (PR #10, merged 2026-10-07)
+
+**Status: merged and closed.** [PR #10](https://github.com/SAM-BIM/SAM_Tas_Grasshopper/pull/10) `feature/t3d-route-selector` -> `sow/2026-Q4`, merge commit `888d92d2` (PR head `28b4d46`, base `72dfe8e1`). Merged with a normal merge commit and head-SHA protection; the feature branch was deleted locally and on origin.
+
+**What it does.** The existing `SAMAnalytical.WorkflowgbXML` component (SAM > Tas, GUID `3a47ec9c-d007-4c80-b91d-d828fb05baa3`) has a new optional **Boolean** input `T3DRoute_`, default `false`, placed directly above `_run` (`_run` stays last). It only sets `WorkflowSettings.T3DRoute`; the Direct T3D implementation is entirely in SAM_Tas (SAM_Tas#84, `f9202503`, on `sow/2026-Q4`).
+
+- `false`, disconnected, null or unreadable -> `T3DRoute.GbXML` (the current workflow). Only an explicit `true` -> `T3DRoute.Direct`. Direct can never be selected by omission.
+- Every run adds the remark `T3D route: GbXML.` or `T3D route: Direct.`; on Direct the SAM_Tas core also adds a `Direct T3D conversion: ...` note.
+- With Direct the core ignores the gbXML file, but the component still requires `_pathgbXML` (unchanged).
+
+**Backward compatibility.** The 17 original inputs are unchanged in name and relative order and are found by name; component GUID unchanged; component version bumped `1.0.12` -> `1.0.13` so placed components are offered the update. An older placed component without the input behaves exactly as before (GbXML).
+
+**Files changed.** `Grasshopper/SAM.Analytical.Grasshopper.Tas/Component/SAMAnalyticalWorkflowgbXML.cs` only (net of the PR; an intermediate string-input version and its `Query/TryGetT3DRoute.cs` helper were removed before merge).
+
+**Dependency.** None pinned in this repo: it builds against sibling `SAM_Tas\build\`, and CI clones the newest `sow/YYYY-Qn` (`sow/2026-Q4`, which contains the core). No dependency change. Local builds need SAM_Tas at `sow/2026-Q4` (a Q3 checkout has no `T3DRoute`).
+
+**Validation.**
+- CI on the PR head `28b4d46`: `build` and `spdx` both green; PR clean, no reviews or comments.
+- Local Debug/Release build of `SAM_Tas_Grasshopper.sln` against SAM_Tas Q4: 0 errors; `check-guid-identity.ps1` passed (104 component GUIDs).
+- Headless checks on the built DLL: 17 original inputs in the original order, `T3DRoute_` 17th of 18 (Boolean, optional, default false), `_run` last, GUID unchanged, default `WorkflowSettings.T3DRoute == GbXML`.
+- Manual Grasshopper acceptance (owner, 2026-10-07): false/disconnected -> GbXML; true -> Direct with the `Direct T3D conversion:` remark and the expected T3D/TBD; wiring usable after re-adding the input. On a 3-flat model the Direct run matched the gbXML run (identical object counts per type, areas, volumes and zone max sensible loads; load components within 0.2%); `timing.csv` shows `Converting SAM to T3D` in place of `Importing gbXML`. The final move of the input above `_run` was re-checked headlessly; the owner was asked to re-check it in Grasshopper and gave the go-ahead to merge.
+
+**Known caveats / not tested.**
+- The very oldest fixed-parameter `.gh` files (saved before the component had variable inputs) restore inputs by position; inserting the default-visible `T3DRoute_` before `_run` could shift `_run` there. Not tested with such a file. Mitigation if it shows up: make `T3DRoute_` `ParamVisibility.Voluntary`.
+- Opening the Direct `.t3d`/`.tbd` in Tas was checked by the owner only.
+- `SAM_Tas-ord` (local, dirty `codex/sam113-canonical-native-order`) and `sam-bim.github.io` (stale upstream) have pull problems unrelated to this work; `BuildAlls_v4.bat pull` aborts on them.
+
+**Next step.** None required for this feature. Remaining Q4 items: owner to set Q4 priorities; decide PR #8 (icon redesign), see carry-over above. SAM_UI exposure of the route is out of scope here and was deliberately not started.
 
 ---
 
