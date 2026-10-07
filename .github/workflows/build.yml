@@ -262,6 +262,19 @@ jobs:
           & msbuild $sln /t:Rebuild @common
           if ($LASTEXITCODE -ne 0) { throw "MSBuild rebuild failed: $sln" }
 
+      - name: Run native GenOpt Grasshopper-boundary tests
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          # Not in the solution. References the built plugin and SAM/SAM_Tas build outputs, and builds SAM_Tas's
+          # StubTasGenExecute (PR3's TasGenExecute stand-in) through a ProjectReference. No Tas, COM, licence, Java or
+          # Rhino: the four component-contract tests that need Rhino 8 report as skipped here (see TESTING.md).
+          $testProject = Join-Path '${{ env.REPO_NAME }}' 'Tests/SAM.Analytical.Grasshopper.Tas.GenOpt.Tests/SAM.Analytical.Grasshopper.Tas.GenOpt.Tests.csproj'
+          Write-Host "==> Testing: $testProject"
+          & dotnet test $testProject -c Release --nologo --logger "console;verbosity=normal"
+          if ($LASTEXITCODE -ne 0) { throw "Native GenOpt Grasshopper-boundary tests failed" }
+
       - name: Assert six DLL and GHA outputs exist
         shell: pwsh
         run: |
