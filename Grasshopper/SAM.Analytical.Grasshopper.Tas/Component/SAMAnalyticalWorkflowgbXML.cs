@@ -108,14 +108,13 @@ namespace SAM.Analytical.Grasshopper.Tas
                 @boolean.SetPersistentData(false);
                 result.Add(new GH_SAMParam(@boolean, ParamVisibility.Binding));
 
-                @boolean = new global::Grasshopper.Kernel.Parameters.Param_Boolean() { Name = "_run", NickName = "_run", Description = "Connect a boolean toggle to run.", Access = GH_ParamAccess.item };
-                @boolean.SetPersistentData(false);
-                result.Add(new GH_SAMParam(@boolean, ParamVisibility.Binding));
-
-                //Appended last on purpose: existing definitions keep their inputs in the same positions.
                 @boolean = new global::Grasshopper.Kernel.Parameters.Param_Boolean() { Name = "T3DRoute_", NickName = "T3DRoute_", Description = "T3D generation route.\nfalse (default) = GbXML, the existing workflow.\ntrue = Direct, the direct SAM-to-T3D importer. With Direct the gbXML file is ignored (_pathgbXML is still required by this component).", Access = GH_ParamAccess.item, Optional = true };
                 @boolean.SetPersistentData(false);
                 result.Add(new GH_SAMParam(@boolean, ParamVisibility.Default));
+
+                @boolean = new global::Grasshopper.Kernel.Parameters.Param_Boolean() { Name = "_run", NickName = "_run", Description = "Connect a boolean toggle to run.", Access = GH_ParamAccess.item };
+                @boolean.SetPersistentData(false);
+                result.Add(new GH_SAMParam(@boolean, ParamVisibility.Binding));
 
                 return result.ToArray();
             }
