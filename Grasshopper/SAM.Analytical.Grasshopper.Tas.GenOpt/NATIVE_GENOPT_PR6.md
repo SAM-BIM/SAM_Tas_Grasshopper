@@ -28,7 +28,25 @@ Code, tests and evidence complete; PR open for owner review. Not merged.
 `Classes/NativeGenOptReport.cs`, `Modify/RunNative.cs`, this record; tests `NativeGenOptReportTests.cs`,
 `NativeBoundaryTests.cs`, `NoJavaRouteTests.cs`.
 
-## Validation, risks, next step
+## Validation (head `f4094e3`, against the PR6 SAM_Tas build `31ae7ef`)
 
-In the PR description (final numbers). No licensed or Rhino acceptance rerun: report wording and native execution are
-unchanged; PR4 acceptance stands. Next: owner review, merge after SAM_Tas PR6, then the post-merge closeout.
+- Release MSBuild (VS 18) of `SAM.Analytical.Grasshopper.Tas.GenOpt` and its test project, `APPDATA`/`USERPROFILE`
+  redirected to scratch, real `NUGET_PACKAGES`: 0 errors. A full `SAM_Tas_Grasshopper.sln` Rebuild under the scratch
+  profile fails only in the unrelated `SAM.Core.Grasshopper.Tas.UKBR` post-build `xcopy` to the scratch Grasshopper
+  UserObjects folder (environmental; the GenOpt plugin itself built).
+- `dotnet test Tests/SAM.Analytical.Grasshopper.Tas.GenOpt.Tests -c Release` with `SAM_GENOPT_TESTS_NO_RHINO=1`:
+  **49 passed, 4 skipped** (the Rhino-hosted `ComponentContractTests`, also skipped in CI). Running those 4 with Rhino
+  hung in the unattended session (Rhino initialisation, with the scratch and with the real profile; killed after the
+  timeout; the real `%APPDATA%\SAM` was checked unchanged). They pin GUID/inputs/outputs, which this PR does not touch.
+- First run found one wrong test expectation of mine (prefix of the GPSCoordinateSearch refusal), fixed before commit.
+- PR CI `build` and `spdx`: green on `f4094e3`. `git diff --check` clean.
+- No Rhino or licensed acceptance rerun: wording and native execution unchanged; PR4 acceptance stands.
+
+## Risks
+
+- Grasshopper users now see "Not supported by the native route" for GPSCoordinateSearch (was "Invalid GenOpt settings").
+- Needs SAM_Tas PR6 merged first.
+
+## Next step
+
+Owner review; merge after SAM_Tas PR6; then the post-merge `PROJECT_PROGRESS.md` closeout.
