@@ -6,13 +6,15 @@
 
 ## Last updated
 
-2026-10-07 (PR #10 merged: T3D route selector). Earlier: 2026-10-06 (Q4 operational cleanup).
+2026-10-07 (PR #11 merged: native GenOpt in Grasshopper, PR4 of the Java-free GenOpt migration). Earlier: 2026-10-07 (PR #10 merged: T3D route selector); 2026-10-06 (Q4 operational cleanup).
 
 ## Current status
 
 Q4 branch cut from `master` `b4fce7c8`, which is the exact commit pinned in SAM_Deploy's frozen Q3 baseline (`v20261006.1`). Bootstrap added only internal docs (this file, `AGENTS.md`) and a narrow CI branch-reference update (see Decisions).
 
 First Q4 product change merged 2026-10-07: **PR #10** exposes SAM_Tas `WorkflowSettings.T3DRoute` as a Boolean `T3DRoute_` input on `SAMAnalytical.WorkflowgbXML` (see "T3D route selector" below).
+
+Merged 2026-10-07: **PR #11** (PR4 of the Java-free GenOpt migration) - `SAMAnalytical.GenOpt` runs SAM_Tas `GenOptDocument.RunNative` instead of the legacy Java route (see "Native GenOpt in Grasshopper" below). PR4 is frozen.
 
 ## Q4 priorities
 
@@ -24,6 +26,7 @@ Not yet set by the owner. Record them here at the first Q4 planning pass. Known 
 - Branch `contrib/sow-2026-Q3` - preserve - never merge: HoareLea-compatible unrelated lineage (6 commits not in Q3); see repository-specific rules.
 - Branch `fix/parto-mixed-diagnostic-filename-2026-09-28` - Q3 complete: merged as SAM_Tas_Grasshopper#7; all commits in Q3.
 - Branch `sync/q3-final` - Q3 complete / obsolete: already contained in master.
+- **Release task (from PR4 acceptance; owner-accepted, not blocking PR4, must be resolved before broad installer acceptance):** "Ensure SAM_Deploy ships one consistent current SAM.Math.dll to all SAM/Rhino package/dependency locations so the PR2/PR3 native optimiser assemblies cannot be shadowed by a stale 1.0.0.0 assembly." Locations seen: `%APPDATA%\McNeel\Rhinoceros\packages\8.0\SAM\1.0.0\` (loaded by Rhino first), `%APPDATA%\SAM\SAMdependencies\`, `%APPDATA%\SAM\`. SAM_Deploy was deliberately not changed in PR4.
 
 ## Repository-specific next steps
 
@@ -44,11 +47,12 @@ Not yet set by the owner. Record them here at the first Q4 planning pass. Known 
 
 ## Issues / blockers
 
-- None at bootstrap.
+- No blocker in this repository. Open release task: consistent SAM.Math in every SAM_Deploy location (see Known carry-over work).
 
 ## Next step
 
-- Owner to set Q4 priorities and decide PR #8; the T3D route selector (PR #10) is merged and closed.
+- GenOpt migration: PR5 (SAM_UI) may begin, in a new session; PR6 retires the Java/legacy GenOpt runtime. Resolve the SAM_Deploy SAM.Math release task before broad installer acceptance.
+- Owner to set Q4 priorities and decide PR #8; the T3D route selector (PR #10) and native GenOpt (PR #11) are merged and closed.
 
 ## Q4 operational cleanup (2026-10-06)
 
@@ -57,6 +61,30 @@ Not yet set by the owner. Record them here at the first Q4 planning pass. Known 
 - Checked, no action: the `github.repository_owner == 'SAM-BIM'` build guard (intentional; its comment names HoareLea only to explain why the guard exists), no CODEOWNERS file in this repository (separate lineage), and workflow secrets (no HoareLea-named secret). The local `upstream` (HoareLea) remote is preserved.
 - Carry-over: **SAM Grasshopper icon redesign - PR #8** (`feature/sam-gh-icon-redesign` @ `f12a6af2`) was retargeted from `sow/2026-Q3` to `sow/2026-Q4` on 2026-10-06 (not merged). Its head sits directly on the Q3 tip `9ddf8ff6`, which is an ancestor of `master`/`sow/2026-Q4`, so the PR is exactly its 8 icon-only commits (517 files) and is mergeable.
 - Full cross-repository record, migration table and owner decisions: `SAM_Deploy:sow/2026-Q4` `PROJECT_PROGRESS.md`.
+
+## Native GenOpt in Grasshopper (PR #11, merged 2026-10-07)
+
+**Status: merged, frozen.** [PR #11](https://github.com/SAM-BIM/SAM_Tas_Grasshopper/pull/11) `feature/native-genopt-grasshopper` -> `sow/2026-Q4`, merge commit `28c071c5` (reviewed head `5aa29318`, base `0e62cf04`). Normal merge commit pinned to the head SHA (`--match-head-commit`); merged tree identical to the head. Approval is required only for `master`; no CODEOWNERS file or ruleset covers `sow/2026-Q4`. Codex review on the head: completed, no findings. Feature branch deleted locally and on origin. Full record: `Grasshopper/SAM.Analytical.Grasshopper.Tas.GenOpt/NATIVE_GENOPT_GRASSHOPPER.md`.
+
+**Migration context.** PR1 SAM#182 / SAM_Tas#85 (oracle, Gate T), PR2 SAM#183 (SAM.Math kernel), PR3 SAM_Tas#86 (`GenOptDocument.RunNative`, merged `63a5fec7`) - all frozen. Built against SAM `79c101c2`, SAM_Tas `da891dd2`. Next: PR5 SAM_UI, PR6 Java retirement.
+
+**What it does.** The existing `SAMAnalytical.GenOpt` component (GUID `5259b075-7da6-4d20-8364-67225c43dc4c`, SAM WIP > Tas) builds the same `GenOptDocument` from its inputs and runs `GenOptDocument.RunNative` (SAM.Math kernel -> TasGenExecute). No Java, GenOpt jar, cmd, registry project directory, file watcher or listing file. No adapter/evaluator/algorithm logic in Grasshopper.
+- Contract: GUID, name, category and the 5 inputs unchanged; output `successful` stays first (now: ended normally and not cancelled); appended `outcome`, `simulations`, `bestPoint`, `bestObjectives`, `runDirectory`. Version 1.0.1 -> 1.0.2 (advisory). Placed components keep their saved output and wiring.
+- Progress dialog with Cancel on its own UI thread (`ProgressWindowHost`, the `RunWorkflow` pattern); progress from the kernel's `OptimisationProgress`, delivered synchronously. Cancel is cooperative: a running TasGenExecute finishes, nothing further starts. Run stays synchronous on the Grasshopper thread (UX limitation, as the Tas workflow component).
+- Refused algorithms/settings, missing TasGenExecute and evaluation failures are Grasshopper errors, verbatim; no Java fallback or algorithm substitution. `simulations` after a cancel follows the frozen PR2 convention (includes the number assigned at the cancel); the message says so.
+
+**Files changed.** `Grasshopper/SAM.Analytical.Grasshopper.Tas.GenOpt/`: `Component/SAMAnalyticalGenOpt.cs`, new `Create/GenOptDocument.cs`, `Modify/RunNative.cs`, `Classes/NativeGenOptReport.cs`, the `.csproj` (SAM.Core, SAM.Math, SAM.Core.Windows HintPaths), `NATIVE_GENOPT_GRASSHOPPER.md`; new `Tests/SAM.Analytical.Grasshopper.Tas.GenOpt.Tests/` (not in the .sln; reuses SAM_Tas's PR3 `StubTasGenExecute` via ProjectReference); `.github/workflows/build.yml` (one `dotnet test` step).
+
+**Validation.**
+- `SAM_Tas_Grasshopper.sln` Release rebuild: 0 errors; `check-guid-identity.ps1` passed (104 GUIDs, baseline unchanged).
+- Tests 50/50 with Rhino 8; 46 + 4 skipped without Rhino (CI). Five deliberate mutations each caught.
+- PR CI on `5aa29318`: build + spdx green. Post-merge CI on `28c071c5` (run 37659083559): success - solution build, the new test step (46 passed, 4 Rhino-only skipped) and the six-output check.
+- Real Rhino 8 / Grasshopper acceptance on the final binary, Systems Demo, definitions saved by the pre-PR4 plugin (harness `C:\TasOut\pr4-acc`, not committed): GoldenSection Success 11 sims, best Setpoint 4.968943799848584 / Result 7360.04370117188, **11/11 evaluations bit-identical to frozen PR3**; GPSHookeJeeves Success 16 sims, bestPoint [5], **16/16 bit-identical**; Cancel on the dialog during evaluation 2 -> it finished, nothing further started; unsupported algorithm refused before execution. Every run: no rewiring, no java/javaw, no cmd under Rhino, `HKCU\Software\EDSL\TasManager` unchanged.
+
+**Known caveats.**
+- Release task (carried above): a stale pre-PR2 `SAM.Math.dll` in the Rhino SAM package folder made Grasshopper silently skip the whole GenOpt plugin (all SAM assemblies are 1.0.0.0). Fixed locally only (original kept in `C:\TasOut\pr4-acc\env-backup`).
+- Headless tests cover component construction only: outside Rhino, Grasshopper's component server cannot start (`rhcommon_c`) and shows a modal error, so saved-definition reading is covered by the real acceptance.
+- PR3's refusal text lists GPSCoordinateSearch as "Supported (Phase 1)" although it is refused (cosmetic, SAM_Tas, frozen).
 
 ## T3D route selector (PR #10, merged 2026-10-07)
 
