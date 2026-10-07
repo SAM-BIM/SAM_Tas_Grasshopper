@@ -1,0 +1,58 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Grasshopper-boundary tests for the native GenOpt route (PR4). Not part of SAM_Tas_Grasshopper.sln, so the
+    SAM_Deploy BuildAll is unaffected; CI runs it with `dotnet test` after the solution build. See TESTING.md.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <OutputType>Library</OutputType>
+    <IsPackable>false</IsPackable>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="NUnit" Version="4.2.2" />
+    <PackageReference Include="NUnit3TestAdapter" Version="4.6.0" />
+    <!-- Compile-time only, as in the plugin projects. At run time the Rhino-dependent tests resolve Grasshopper and
+         RhinoCommon from a Rhino 8 installation (the package's RhinoCommon is a reference assembly) and are ignored
+         where Rhino 8 is not installed. -->
+    <PackageReference Include="Grasshopper" Version="8.21.25188.17001">
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Built assemblies, as everywhere in this repository: build SAM, SAM_Windows, SAM_Tas (SAM.Analytical.Tas.GenOpt)
+         and SAM_Tas_Grasshopper.sln first. -->
+    <Reference Include="SAM.Analytical.Grasshopper.Tas.GenOpt">
+      <HintPath>..\..\build\SAM.Analytical.Grasshopper.Tas.GenOpt.dll</HintPath>
+    </Reference>
+    <Reference Include="SAM.Analytical.Tas.GenOpt">
+      <HintPath>..\..\..\SAM_Tas\build\SAM.Analytical.Tas.GenOpt.dll</HintPath>
+    </Reference>
+    <Reference Include="SAM.Core.Tas">
+      <HintPath>..\..\..\SAM_Tas\build\SAM.Core.Tas.dll</HintPath>
+    </Reference>
+    <Reference Include="SAM.Math">
+      <HintPath>..\..\..\SAM\build\SAM.Math.dll</HintPath>
+    </Reference>
+    <Reference Include="SAM.Core">
+      <HintPath>..\..\..\SAM\build\SAM.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="SAM.Core.Grasshopper">
+      <HintPath>..\..\..\SAM\build\SAM.Core.Grasshopper.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- PR3's protocol stand-in for TasGenExecute.exe (SAM_Tas), reused rather than duplicated. It is copied next to
+         the test assembly and run as a real child process. -->
+    <ProjectReference Include="..\..\..\SAM_Tas\SAM_Tas\SAM.Analytical.Tas.GenOpt.Tests.StubTasGenExecute\SAM.Analytical.Tas.GenOpt.Tests.StubTasGenExecute.csproj" />
+  </ItemGroup>
+
+</Project>
