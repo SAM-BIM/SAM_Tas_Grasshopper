@@ -1,4 +1,7 @@
-﻿using SAM.Analytical.Grasshopper.Tas.Properties;
+﻿// SPDX-License-Identifier: LGPL-3.0-or-later
+// Copyright (c) 2020-2026 Michal Dengusiak & Jakub Ziolkowski and contributors
+
+using SAM.Analytical.Grasshopper.Tas.Properties;
 using SAM.Analytical.Tas;
 using SAM.Core.Grasshopper;
 using Grasshopper.Kernel;
@@ -22,7 +25,7 @@ namespace SAM.Analytical.Grasshopper.Tas
         /// <summary>
         /// Provides an Icon for the component.
         /// </summary>
-        protected override System.Drawing.Bitmap Icon => Resources.SAM_TasTSD3;
+        protected override System.Drawing.Bitmap Icon => Resources.SAM_GH_PanelValueTsd;
 
         public override GH_Exposure Exposure => GH_Exposure.quarternary;
 

@@ -1,4 +1,7 @@
-﻿using Grasshopper.Kernel;
+﻿// SPDX-License-Identifier: LGPL-3.0-or-later
+// Copyright (c) 2020-2026 Michal Dengusiak & Jakub Ziolkowski and contributors
+
+using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using SAM.Core.Grasshopper.Tas.Properties;
 using SAM.Core.Tas;
@@ -33,7 +36,7 @@ namespace SAM.Core.Grasshopper.Tas
 
         public override GH_Exposure Exposure => GH_Exposure.hidden;
 
-        protected override System.Drawing.Bitmap Icon => Resources.SAM_Small;
+        protected override System.Drawing.Bitmap Icon => Resources.SAM_GH_SettingsTbd;
 
         public GooSurfaceOutputSpecParam()
             : base(typeof(SurfaceOutputSpec).Name, typeof(SurfaceOutputSpec).Name, typeof(SurfaceOutputSpec).FullName.Replace(".", " "), "Params", "SAM")

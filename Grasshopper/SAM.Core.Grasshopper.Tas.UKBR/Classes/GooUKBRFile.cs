@@ -1,4 +1,7 @@
-﻿using Grasshopper.Kernel;
+﻿// SPDX-License-Identifier: LGPL-3.0-or-later
+// Copyright (c) 2020-2026 Michal Dengusiak & Jakub Ziolkowski and contributors
+
+using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using SAM.Core.Grasshopper.Tas.UKBR.Properties;
 using SAM.Core.Tas.UKBR;
@@ -49,7 +52,7 @@ namespace SAM.Core.Grasshopper.Tas.UKBR
 
         public override GH_Exposure Exposure => GH_Exposure.hidden;
 
-        protected override System.Drawing.Bitmap Icon => Resources.SAM_T3D3;
+        protected override System.Drawing.Bitmap Icon => Resources.SAM_GH_File;
 
         public GooUKBRFileParam()
             : base(typeof(UKBRFile).Name, typeof(UKBRFile).Name, typeof(UKBRFile).FullName.Replace(".", " "), "Params", "SAM")
