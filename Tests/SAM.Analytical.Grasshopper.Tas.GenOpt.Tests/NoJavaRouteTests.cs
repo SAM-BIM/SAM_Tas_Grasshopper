@@ -76,6 +76,15 @@ namespace SAM.Analytical.Grasshopper.Tas.GenOpt.Tests
             Assert.That(memberReferences, Does.Contain("SAM.Analytical.Tas.GenOpt.GenOptDocument::RunNative"));
         }
 
+        /// <summary>PR6: the result rules (success, withholding, best point, running lowest, refusal wording) are SAM_Tas'.</summary>
+        [TestCase("SAM.Analytical.Tas.GenOpt.NativeGenOptOutcome::.ctor")]
+        [TestCase("SAM.Analytical.Tas.GenOpt.NativeGenOptOutcome::IsLower")]
+        [TestCase("SAM.Analytical.Tas.GenOpt.NativeGenOptOutcome::RefusalMessage")]
+        public void UsesTheSharedResultRules(string member)
+        {
+            Assert.That(memberReferences, Does.Contain(member));
+        }
+
         [TestCase("SAM.Analytical.Tas.GenOpt.GenOptDocument::Run")]
         [TestCase("SAM.Analytical.Tas.GenOpt.GenOptDocument::get_ExecutableFile")]
         [TestCase("SAM.Analytical.Tas.GenOpt.GenOptDocument::set_Command")]

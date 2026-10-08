@@ -14,7 +14,9 @@ namespace SAM.Analytical.Grasshopper.Tas.GenOpt
     /// <summary>
     /// What the SAMAnalytical.GenOpt component reports for one native run: read from the kernel's structured
     /// <see cref="OptimisationResult"/>, never from GenOpt output files. It holds no Grasshopper types; the component
-    /// turns <see cref="Log"/> into runtime messages (Message = remark).
+    /// turns <see cref="Log"/> into runtime messages (Message = remark). Which runs succeed, when a result is withheld,
+    /// the best point, the interval and the refusal wording are SAM_Tas' <see cref="NativeGenOptOutcome"/> (shared with
+    /// SAM_UI, PR6); the log lines are this component's.
     /// </summary>
     public sealed class NativeGenOptReport
     {
@@ -27,7 +29,7 @@ namespace SAM.Analytical.Grasshopper.Tas.GenOpt
             BestPoint = none;
             BestObjectives = none;
             Log = new Log();
-            Log.Add("{0}", LogRecordType.Error, Message(exception));
+            Log.Add("{0}", LogRecordType.Error, NativeGenOptOutcome.RefusalMessage(exception));
         }
 
         public NativeGenOptReport(NativeGenOptRun nativeGenOptRun, bool cancelledAfterRun)
@@ -51,7 +53,10 @@ namespace SAM.Analytical.Grasshopper.Tas.GenOpt
                 throw new ArgumentNullException(nameof(result));
             }
 
+            NativeGenOptOutcome nativeGenOptOutcome = new NativeGenOptOutcome(result, cancelledAfterRun);
+
             Outcome = result.Outcome;
+            Successful = nativeGenOptOutcome.Successful;
             Simulations = result.Simulations;
             RunDirectory = runDirectory;
             BestPoint = none;
@@ -61,17 +66,14 @@ namespace SAM.Analytical.Grasshopper.Tas.GenOpt
             switch (result.Outcome)
             {
                 case OptimisationOutcome.Success:
-                    Successful = true;
                     Log.Add("{0}", LogRecordType.Message, string.Format(CultureInfo.InvariantCulture, "Native optimisation finished: Success after {0} simulations.", result.Simulations));
                     break;
 
                 case OptimisationOutcome.MaximumSimulationsReached:
-                    Successful = true;
                     Log.Add("{0}", LogRecordType.Warning, string.Format(CultureInfo.InvariantCulture, "The simulation limit was reached ({0} simulations) before the stopping criterion was met; the lowest point found is reported.", result.Simulations));
                     break;
 
                 case OptimisationOutcome.Nullspace:
-                    Successful = true;
                     Log.Add("{0}", LogRecordType.Warning, "Golden section stopped on two consecutive equal objective values (nullspace); the lowest point found is reported.");
                     break;
 
@@ -92,15 +94,14 @@ namespace SAM.Analytical.Grasshopper.Tas.GenOpt
                     break;
             }
 
-            if (Successful && cancelledAfterRun)
+            if (nativeGenOptOutcome.Withheld)
             {
-                Successful = false;
                 Log.Add("{0}", LogRecordType.Message, "Optimisation cancelled by user as the run finished (kernel outcome: " + result.Outcome + "). The result is withheld; the evaluation folders remain in the run folder.");
             }
 
             if (Successful)
             {
-                OptimisationTraceEntry best = Best(result);
+                OptimisationTraceEntry best = nativeGenOptOutcome.BestEntry;
                 if (best != null)
                 {
                     BestPoint = best.Coordinates;
@@ -108,9 +109,9 @@ namespace SAM.Analytical.Grasshopper.Tas.GenOpt
                     Log.Add("{0}", LogRecordType.Message, "Best point: " + Text(parameterNames, best.Coordinates) + "; " + Text(objectiveNames, best.Outputs) + ".");
                 }
 
-                if (result.Interval != null)
+                if (nativeGenOptOutcome.Interval != null)
                 {
-                    Log.Add("{0}", LogRecordType.Message, string.Format(CultureInfo.InvariantCulture, "Final interval: [{0}, {1}].", result.Interval.Lower, result.Interval.Upper));
+                    Log.Add("{0}", LogRecordType.Message, string.Format(CultureInfo.InvariantCulture, "Final interval: [{0}, {1}].", nativeGenOptOutcome.Interval.Lower, nativeGenOptOutcome.Interval.Upper));
                 }
             }
 
@@ -143,39 +144,6 @@ namespace SAM.Analytical.Grasshopper.Tas.GenOpt
 
         public Log Log { get; }
 
-        /// <summary>
-        /// The kernel's reported minimum (pattern search). Golden section reports none, so its best point is the
-        /// lowest objective among all entries, the first one on a tie (the PR3 acceptance definition).
-        /// </summary>
-        public static OptimisationTraceEntry Best(OptimisationResult result)
-        {
-            if (result == null)
-            {
-                return null;
-            }
-
-            if (result.Minimum != null)
-            {
-                return result.Minimum;
-            }
-
-            OptimisationTraceEntry best = null;
-            foreach (OptimisationTraceEntry entry in result.Entries)
-            {
-                if (double.IsNaN(entry.Objective))
-                {
-                    continue;
-                }
-
-                if (best == null || entry.Objective < best.Objective)
-                {
-                    best = entry;
-                }
-            }
-
-            return best;
-        }
-
         public static string Text(IReadOnlyList<string> names, IReadOnlyList<double> values)
         {
             if (values == null)
@@ -184,27 +152,6 @@ namespace SAM.Analytical.Grasshopper.Tas.GenOpt
             }
 
             return string.Join(", ", values.Select((x, i) => (names != null && i < names.Count ? names[i] : "#" + i) + " = " + x.ToString(CultureInfo.InvariantCulture)));
-        }
-
-        private static string Message(Exception exception)
-        {
-            switch (exception)
-            {
-                case GenOptCompatibilityException _:
-                    return "Invalid GenOpt settings for the native route: " + exception.Message;
-
-                case NotSupportedException _:
-                    return "Not supported by the native route: " + exception.Message;
-
-                case System.IO.FileNotFoundException fileNotFoundException:
-                    return exception.Message + " Path: '" + fileNotFoundException.FileName + "'.";
-
-                case System.IO.DirectoryNotFoundException _:
-                    return exception.Message;
-
-                default:
-                    return "Native optimisation failed (" + exception?.GetType().Name + "): " + exception?.Message;
-            }
         }
     }
 }

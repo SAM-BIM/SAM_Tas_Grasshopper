@@ -84,11 +84,12 @@ namespace SAM.Analytical.Grasshopper.Tas.GenOpt.Tests
         {
             // The first golden-section points are about 10.3 and 19.7 on [-5, 35].
             OptimisationResult result = Run(GoldenSection(), x => x > 15 ? double.NaN : x);
-            OptimisationTraceEntry best = NativeGenOptReport.Best(result);
+            NativeGenOptReport report = new NativeGenOptReport(result, ParameterNames, ObjectiveNames, null, false);
 
             Assert.That(result.Entries.Any(x => double.IsNaN(x.Objective)), Is.True);
-            Assert.That(best, Is.Not.Null);
-            Assert.That(double.IsNaN(best.Objective), Is.False);
+            Assert.That(report.BestObjectives, Is.Not.Empty);
+            Assert.That(double.IsNaN(report.BestObjectives[0]), Is.False);
+            Assert.That(report.BestPoint, Is.EqualTo(NativeGenOptOutcome.Best(result).Coordinates), "The component reports SAM_Tas' best point (PR6).");
         }
 
         [Test]

@@ -130,7 +130,7 @@ namespace SAM.Analytical.Grasshopper.Tas.GenOpt
             private readonly IReadOnlyList<string> parameterNames;
             private readonly IReadOnlyList<string> objectiveNames;
             private int simulation;
-            private double lowest = double.NaN;
+            private OptimisationTraceEntry lowest;
 
             public ProgressText(GenOptDocument genOptDocument)
             {
@@ -148,16 +148,16 @@ namespace SAM.Analytical.Grasshopper.Tas.GenOpt
                     simulation = entry.Simulation;
                 }
 
-                if (!double.IsNaN(entry.Objective) && (double.IsNaN(lowest) || entry.Objective < lowest))
+                if (NativeGenOptOutcome.IsLower(entry, lowest))
                 {
-                    lowest = entry.Objective;
+                    lowest = entry;
                 }
 
                 text = string.Format(CultureInfo.InvariantCulture, "Simulation {0}: {1} -> {2} (lowest {3})",
                     entry.Simulation,
                     NativeGenOptReport.Text(parameterNames, entry.Coordinates),
                     NativeGenOptReport.Text(objectiveNames, entry.Outputs.Take(1).ToList()),
-                    lowest);
+                    lowest == null ? double.NaN : lowest.Objective);
 
                 return result;
             }
