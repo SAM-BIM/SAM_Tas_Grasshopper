@@ -6,7 +6,7 @@
 
 ## Last updated
 
-2026-10-07 (PR #11 merged: native GenOpt in Grasshopper, PR4 of the Java-free GenOpt migration). Earlier: 2026-10-07 (PR #10 merged: T3D route selector); 2026-10-06 (Q4 operational cleanup).
+2026-10-08 (PR #12 merged: shared native result rules, PR6 of the Java-free GenOpt migration). Earlier: 2026-10-07 (PR #11 merged: native GenOpt in Grasshopper, PR4); 2026-10-07 (PR #10 merged: T3D route selector); 2026-10-06 (Q4 operational cleanup).
 
 ## Current status
 
@@ -61,6 +61,30 @@ Not yet set by the owner. Record them here at the first Q4 planning pass. Known 
 - Checked, no action: the `github.repository_owner == 'SAM-BIM'` build guard (intentional; its comment names HoareLea only to explain why the guard exists), no CODEOWNERS file in this repository (separate lineage), and workflow secrets (no HoareLea-named secret). The local `upstream` (HoareLea) remote is preserved.
 - Carry-over: **SAM Grasshopper icon redesign - PR #8** (`feature/sam-gh-icon-redesign` @ `f12a6af2`) was retargeted from `sow/2026-Q3` to `sow/2026-Q4` on 2026-10-06 (not merged). Its head sits directly on the Q3 tip `9ddf8ff6`, which is an ancestor of `master`/`sow/2026-Q4`, so the PR is exactly its 8 icon-only commits (517 files) and is mergeable.
 - Full cross-repository record, migration table and owner decisions: `SAM_Deploy:sow/2026-Q4` `PROJECT_PROGRESS.md`.
+
+## Native GenOpt result rules from SAM_Tas (PR #12, merged 2026-10-08)
+
+- **Status:** complete, closed. SAM-BIM/SAM_Tas_Grasshopper#12 (`feature/native-optimisation-pr6-retire-legacy`) merged
+  into `sow/2026-Q4` as merge commit `c43c2cadce41c18855145f1b329287b200f5a525` (parents: Q4 base `a01f670d` + reviewed
+  PR head `ab2bd87db96b390b56a70226bc82cf82cfd29c13`; merge tree `4413858` identical to the head tree); merge method:
+  merge commit with `--match-head-commit`. PR CI (`build`, `spdx`) green on the head; post-merge `Build (Windows)` on
+  `c43c2cad` green (built against SAM_Tas `sow/2026-Q4` with SAM_Tas#87). Codex: P1 (record must hold the validation)
+  fixed, thread resolved. Branch removed locally and on origin. Record:
+  `Grasshopper/SAM.Analytical.Grasshopper.Tas.GenOpt/NATIVE_GENOPT_PR6.md`; full PR6 record: SAM_Tas
+  `NATIVE_GENOPT_PR6.md`. Merged after SAM_Tas#87 (merge `8dffaa3d`), per the owner-approved order.
+- **Work completed:** `NativeGenOptReport` reads success / withholding / best point / interval / refusal wording from
+  SAM_Tas `NativeGenOptOutcome` (own `Best` and refusal mapping removed; log lines, order and record types unchanged).
+  `Modify.RunNative` progress text uses `NativeGenOptOutcome.IsLower`. GPSCoordinateSearch now reported as "Not supported
+  by the native route" (SAM_Tas PR6). `NoJavaRouteTests.UsesTheSharedResultRules` pins the shared rule.
+- **Files changed (6):** `Classes/NativeGenOptReport.cs`, `Modify/RunNative.cs`, `NATIVE_GENOPT_PR6.md`; tests
+  `NativeGenOptReportTests.cs`, `NativeBoundaryTests.cs`, `NoJavaRouteTests.cs`.
+- **Validation:** Release build of the GenOpt plugin and tests against the PR6 SAM_Tas build: 0 errors. Tests with
+  `SAM_GENOPT_TESTS_NO_RHINO=1`: 49 passed, 4 skipped (Rhino-hosted `ComponentContractTests`, also skipped in CI; they
+  hung during Rhino start-up in the unattended session; they pin GUID/inputs/outputs, which PR6 did not touch). No Rhino
+  or licensed acceptance rerun: wording and native execution unchanged; PR4 acceptance stands.
+- **Unresolved issues, risks:** the 4 Rhino-hosted contract tests were not run locally for PR6. Grasshopper users see "Not
+  supported" instead of "Invalid GenOpt settings" for GPSCoordinateSearch.
+- **Next step:** none for this PR. SAM_Deploy shipping task (current SAM.Math / GenOpt assemblies) remains separate.
 
 ## Native GenOpt in Grasshopper (PR #11, merged 2026-10-07)
 
