@@ -107,7 +107,9 @@ jobs:
             $baseRef = '${{ github.base_ref }}'
             $refName = '${{ github.ref_name }}'
             $candidates = @()
-            if ($headRef) { $candidates += $headRef }
+            # The legacy icon branch name exists in siblings on frozen Q3 code.
+            # Quarterly icon PRs must resolve their current base before that old branch.
+            if ($headRef -and -not ($baseRef -match '^sow/' -and $headRef -eq 'feature/sam-gh-icon-redesign')) { $candidates += $headRef }
             # Current sow branch: base_ref on PR events, ref_name on push events.
             $sowRef = if ($baseRef -match '^sow/') { $baseRef } elseif ($refName -match '^sow/') { $refName } else { '' }
             if ($sowRef -and $sowRef -ne $headRef) { $candidates += $sowRef }

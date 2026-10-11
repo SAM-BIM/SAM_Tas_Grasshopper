@@ -17,3 +17,4 @@ Base: `sow/2026-Q4`. Scope: SAM-BIM only. Reference: [SAM#179](https://github.co
 - Built assembly resource presence and exact embedded PNG bytes checked.
 
 Next step: resolve any listed blockers, then verify final-head GitHub checks and merge only if green and safe under the owner authorization. No force-push or branch deletion. Hosted Rhino smoke is not claimed as a fresh pass; source and embedded-resource checks are the completed icon verification.
+`nCI correction: the legacy shared feature/sam-gh-icon-redesign name selected SAM frozen-Q3 code and failed missing Native Optimisation types. Quarterly icon PRs now resolve the active quarterly base before that legacy branch; product source is unchanged. Local current-Q4 build and 53/53 tests passed. Final-head CI must pass before merge.
