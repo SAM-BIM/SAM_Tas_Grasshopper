@@ -20,4 +20,3 @@ jobs:
           delete_run_by_conclusion_pattern: failed|cancelled
           retain_days: 14
           keep_minimum_runs: 0
-

@@ -26,7 +26,7 @@ namespace SAM.Analytical.Grasshopper.Tas
         /// <summary>
         /// The latest version of this component
         /// </summary>
-        public override string LatestComponentVersion => "1.0.12";
+        public override string LatestComponentVersion => "1.0.13";
 
         /// <summary>
         /// Provides an Icon for the component.
@@ -107,6 +107,10 @@ namespace SAM.Analytical.Grasshopper.Tas
                 @boolean = new global::Grasshopper.Kernel.Parameters.Param_Boolean() { Name = "saveWeather_", NickName = "saveWeather_", Description = "Save Wetaher in Analytical Model", Optional = true, Access = GH_ParamAccess.item };
                 @boolean.SetPersistentData(false);
                 result.Add(new GH_SAMParam(@boolean, ParamVisibility.Binding));
+
+                @boolean = new global::Grasshopper.Kernel.Parameters.Param_Boolean() { Name = "T3DRoute_", NickName = "T3DRoute_", Description = "T3D generation route.\nfalse (default) = GbXML, the existing workflow.\ntrue = Direct, the direct SAM-to-T3D importer. With Direct the gbXML file is ignored (_pathgbXML is still required by this component).", Access = GH_ParamAccess.item, Optional = true };
+                @boolean.SetPersistentData(false);
+                result.Add(new GH_SAMParam(@boolean, ParamVisibility.Default));
 
                 @boolean = new global::Grasshopper.Kernel.Parameters.Param_Boolean() { Name = "_run", NickName = "_run", Description = "Connect a boolean toggle to run.", Access = GH_ParamAccess.item };
                 @boolean.SetPersistentData(false);
@@ -331,6 +335,22 @@ namespace SAM.Analytical.Grasshopper.Tas
                 }
             }
 
+            //Only an explicit true selects Direct. Input absent (not on this component), disconnected, null
+            //or unreadable = false = GbXML.
+            bool t3DDirect = false;
+            index = Params.IndexOfInputParam("T3DRoute_");
+            if (index != -1)
+            {
+                if (!dataAccess.GetData(index, ref t3DDirect))
+                {
+                    t3DDirect = false;
+                }
+            }
+
+            T3DRoute t3DRoute = t3DDirect ? T3DRoute.Direct : T3DRoute.GbXML;
+
+            AddRuntimeMessage(GH_RuntimeMessageLevel.Remark, string.Format("T3D route: {0}.", t3DRoute));
+
             WorkflowSettings workflowSettings = new WorkflowSettings()
             {
                 Path_TBD = path_TBD,
@@ -348,7 +368,8 @@ namespace SAM.Analytical.Grasshopper.Tas
                 SimulateFrom = 1,
                 SimulateTo = 365,
                 RemoveExistingTBD = removeExistingTBD,
-                UpdateWindowPositionType = updateWindowPositionType
+                UpdateWindowPositionType = updateWindowPositionType,
+                T3DRoute = t3DRoute
             };
 
             analyticalModel = Modify.RunWorkflow(analyticalModel, workflowSettings, out bool cancelled, out System.Collections.Generic.List<string> notes);

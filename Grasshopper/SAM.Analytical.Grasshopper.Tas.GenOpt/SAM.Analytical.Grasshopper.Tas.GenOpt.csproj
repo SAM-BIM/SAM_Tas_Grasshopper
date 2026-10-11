@@ -27,6 +27,15 @@
     <Reference Include="SAM.Analytical.Tas.GenOpt">
       <HintPath>..\..\..\SAM_Tas\build\SAM.Analytical.Tas.GenOpt.dll</HintPath>
     </Reference>
+    <Reference Include="SAM.Core">
+      <HintPath>..\..\..\SAM\build\SAM.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="SAM.Math">
+      <HintPath>..\..\..\SAM\build\SAM.Math.dll</HintPath>
+    </Reference>
+    <Reference Include="SAM.Core.Windows">
+      <HintPath>..\..\..\SAM_Windows\build\SAM.Core.Windows.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Update="Properties\Resources.Designer.cs">
