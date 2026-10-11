@@ -1,4 +1,7 @@
-﻿using Grasshopper.Kernel;
+﻿// SPDX-License-Identifier: LGPL-3.0-or-later
+// Copyright (c) 2020-2026 Michal Dengusiak & Jakub Ziolkowski and contributors
+
+using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
 using SAM.Analytical.Grasshopper.Tas.GenOpt.Properties;
 using SAM.Analytical.Tas.GenOpt;
@@ -23,7 +26,7 @@ namespace SAM.Analytical.Grasshopper.Tas.GenOpt
         /// <summary>
         /// Provides an Icon for the component.
         /// </summary>
-        protected override System.Drawing.Bitmap Icon => Resources.SAM_GenOpt;
+        protected override System.Drawing.Bitmap Icon => Resources.SAM_GH_AlgorithmCreate;
 
 
         public override GH_Exposure Exposure => GH_Exposure.tertiary;

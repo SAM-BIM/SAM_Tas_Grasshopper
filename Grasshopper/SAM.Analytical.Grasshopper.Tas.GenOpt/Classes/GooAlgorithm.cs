@@ -1,4 +1,7 @@
-﻿using Grasshopper.Kernel;
+﻿// SPDX-License-Identifier: LGPL-3.0-or-later
+// Copyright (c) 2020-2026 Michal Dengusiak & Jakub Ziolkowski and contributors
+
+using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using SAM.Analytical.Grasshopper.Tas.GenOpt.Properties;
 using SAM.Analytical.Tas.GenOpt;
@@ -90,7 +93,7 @@ namespace SAM.Analytical.Grasshopper.Tas.GenOpt
 
         public override GH_Exposure Exposure => GH_Exposure.hidden;
 
-        protected override System.Drawing.Bitmap Icon => Resources.SAM_TasT3D;
+        protected override System.Drawing.Bitmap Icon => Resources.SAM_GH_Algorithm;
 
         public GooAlgorithmParam()
             : base(typeof(Algorithm).Name, typeof(Algorithm).Name, typeof(Algorithm).FullName.Replace(".", " "), "Params", "SAM")
