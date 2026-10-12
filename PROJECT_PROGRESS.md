@@ -1,5 +1,14 @@
 # Project Progress - SAM_Tas_Grasshopper (2026-Q4)
 
+## Q4 agent instructions rollout closeout - 2026-10-12
+
+- SAM-BIM/SAM_Tas_Grasshopper#14 merged as `62d37e1e959fb6316e326086802ea1cdf874003d` (merge commit pinned to approved head `9fe5a921a9709689a6fabf1d254e1e232b8942c7`; base `sow/2026-Q4` `a3d654dfa6298d3d52989b13dd9eeeeb129235b5`; validated content `03a563c6e90422db546c554c8821e4d3a91c9fb6`). Owner-authorized 2026-10-12 after an independent review (`AGENT_ROLLOUT_REVIEW_2026-10-12.md`, local to the owner's workspace, not committed).
+- Docs only: AGENTS.md, CLAUDE.md, plus the rollout record `documentation/Agent-Continuity-Rollout-Q4.md`. `contrib/sow-2026-Q3` untouched and now named as cleanup-protected. No product code, build, workflow, dependency pin or tool changed; this closeout is the only `PROJECT_PROGRESS.md` change.
+- Validation: local documentation checks and commands are in `documentation/Agent-Continuity-Rollout-Q4.md` (`git diff --check`, file scope, UTF-8/LF/no BOM, import). Hosted checks at the approved head: build success (run 38257803135); spdx success (run 38257803154). Dependency selection: dependency clones in the build log: SAM @ sow/2026-Q4, SAM_gbXML @ sow/2026-Q4, SAM_Mollier @ sow/2026-Q4, SAM_Psychrometrics @ sow/2026-Q4, SAM_SolarCalculator @ sow/2026-Q4, SAM_Systems @ sow/2026-Q4, SAM_Tas @ sow/2026-Q4, SAM_Windows @ sow/2026-Q4.
+- Cleanup: remote docs/agent-instructions-rollout-q4 deleted with an expected-SHA lease on 9fe5a921a9709689a6fabf1d254e1e232b8942c7 after confirming it is contained in sow/2026-Q4 and no open PR uses it as head or base; the local branch and its worktree are preserved (worktree in use). Other branches, worktrees and the frozen quarters were not touched.
+- Remaining gaps: no agent-client behaviour or token benchmark has been run.
+- Exact next step: Continue from the shared `AGENTS.md`. Open item carried from the pilots: verify on each installed agent client, in a fresh Q4 session, that it follows the instructions without loading the full progress history, and record the result.
+
 ## Q4 Tas result units correction closeout - 2026-10-12
 
 - SAM-BIM/SAM_Tas_Grasshopper#13 merged as `8054867fc317135e30792defe9796addfd12cef2`, approved head `d57b150c9fc18ad5aeb586e1278fa3f3625cc4fc` (record-only commits after the tested content). Owner-approved. `Tas.AddBuildingResults` reads consumption/peaks through SAM's helper, so old unmarked and new results display identical values; per-area and per-volume values stay W/m2 and W/m3.
