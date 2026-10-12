@@ -55,6 +55,23 @@ runtime warning.
 - Mutation: 3/3 killed (divides again; peak per area without × 1000; raw parameter read).
 - PR CI (`build`, `spdx`): see the PR.
 
+## Tested content, local versus GitHub checks, reproduction
+
+- PR SAM-BIM/SAM_Tas_Grasshopper#13, base `sow/2026-Q4`. **Validated content SHA `69501ca802d11adf7cc715415edf2e2fa41fbd79`**,
+  built against SAM `b28daa77` and SAM_Tas `36fb21d4`; later commits are record-only. The final PR head and its GitHub
+  checks are named in the PR description.
+- "Validation" above is **local** (this laptop, VS 18 MSBuild, .NET 8, Rhino 8 installed) unless it says "PR CI"; the
+  GitHub checks are `build` (solution build, the GenOpt boundary tests and the new offline tests) and `spdx`.
+- Reproduce (SAM and SAM_Tas built first from their PR branches):
+
+  ```
+  MSBuild SAM_Tas_Grasshopper.sln -restore -p:Configuration=Release -m
+  dotnet test Tests/SAM.Analytical.Grasshopper.Tas.Tests/SAM.Analytical.Grasshopper.Tas.Tests.csproj -c Release            # 8/8
+  dotnet test Tests/SAM.Analytical.Grasshopper.Tas.GenOpt.Tests/SAM.Analytical.Grasshopper.Tas.GenOpt.Tests.csproj -c Release   # 53/53
+  ```
+
+- No machine-local evidence specific to this PR; the licensed confirmation is in SAM-BIM/SAM_Tas#98's record.
+
 ## Unresolved issues and risks
 
 - Grasshopper definitions keep their saved output descriptions until the component is refreshed; only the text differs.
