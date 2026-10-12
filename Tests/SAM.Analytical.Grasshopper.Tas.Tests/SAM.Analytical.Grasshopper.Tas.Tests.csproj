@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Offline tests of SAM.Analytical.Grasshopper.Tas types that hold no Tas, COM or Grasshopper type (BuildingResults, the
+    outputs of Tas.AddBuildingResults). Not part of SAM_Tas_Grasshopper.sln, so the SAM_Deploy BuildAll is unaffected; CI
+    runs it with `dotnet test` after the solution build. Build SAM, SAM_Tas and SAM_Tas_Grasshopper.sln first: the
+    plugin is referenced as a built DLL.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <OutputType>Library</OutputType>
+    <IsPackable>false</IsPackable>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="NUnit" Version="4.2.2" />
+    <PackageReference Include="NUnit3TestAdapter" Version="4.6.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="SAM.Analytical.Grasshopper.Tas">
+      <HintPath>..\..\build\SAM.Analytical.Grasshopper.Tas.dll</HintPath>
+    </Reference>
+    <Reference Include="SAM.Analytical">
+      <HintPath>..\..\..\SAM\build\SAM.Analytical.dll</HintPath>
+    </Reference>
+    <Reference Include="SAM.Core">
+      <HintPath>..\..\..\SAM\build\SAM.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="SAM.Math">
+      <HintPath>..\..\..\SAM\build\SAM.Math.dll</HintPath>
+    </Reference>
+    <Reference Include="SAM.Geometry">
+      <HintPath>..\..\..\SAM\build\SAM.Geometry.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>

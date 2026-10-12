@@ -277,6 +277,18 @@ jobs:
           & dotnet test $testProject -c Release --nologo --logger "console;verbosity=normal"
           if ($LASTEXITCODE -ne 0) { throw "Native GenOpt Grasshopper-boundary tests failed" }
 
+      - name: Run Tas Grasshopper offline tests
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          # Not in the solution. References the built plugin and SAM build outputs; tests plugin types that hold no Tas,
+          # COM or Grasshopper type (BuildingResults: the Tas.AddBuildingResults outputs and their units).
+          $testProject = Join-Path '${{ env.REPO_NAME }}' 'Tests/SAM.Analytical.Grasshopper.Tas.Tests/SAM.Analytical.Grasshopper.Tas.Tests.csproj'
+          Write-Host "==> Testing: $testProject"
+          & dotnet test $testProject -c Release --nologo --logger "console;verbosity=normal"
+          if ($LASTEXITCODE -ne 0) { throw "Tas Grasshopper offline tests failed" }
+
       - name: Assert six DLL and GHA outputs exist
         shell: pwsh
         run: |

@@ -86,15 +86,15 @@ namespace SAM.Analytical.Grasshopper.Tas
                 result.Add(new GH_SAMParam(new global::Grasshopper.Kernel.Parameters.Param_Number() { Name = "ConsumptionHeatingPerArea", NickName = "ConsumptionHeatingPerArea", Description = "Consumption Heating Per Area [kWh/m2]", Access = GH_ParamAccess.item }, ParamVisibility.Binding));
                 result.Add(new GH_SAMParam(new global::Grasshopper.Kernel.Parameters.Param_Number() { Name = "ConsumptionHeatingPerVolume", NickName = "ConsumptionHeatingPerVolume", Description = "Consumption Heating Per Volume [kWh/m3]", Access = GH_ParamAccess.item }, ParamVisibility.Binding));
                 result.Add(new GH_SAMParam(new global::Grasshopper.Kernel.Parameters.Param_Number() { Name = "PeakHeatingLoad", NickName = "PeakHeatingLoad", Description = "Peak Heating Load [kW]", Access = GH_ParamAccess.item }, ParamVisibility.Binding));
-                result.Add(new GH_SAMParam(new global::Grasshopper.Kernel.Parameters.Param_Number() { Name = "PeakHeatingLoadPerArea", NickName = "PeakHeatingLoadPerArea", Description = "Peak Heating Load Per Area [kWh/m2]", Access = GH_ParamAccess.item }, ParamVisibility.Binding));
-                result.Add(new GH_SAMParam(new global::Grasshopper.Kernel.Parameters.Param_Number() { Name = "PeakHeatingLoadPerVolume", NickName = "PeakHeatingLoadPerVolume", Description = "Peak Heating Load Per Volume [kWh/m3]", Access = GH_ParamAccess.item }, ParamVisibility.Binding));
+                result.Add(new GH_SAMParam(new global::Grasshopper.Kernel.Parameters.Param_Number() { Name = "PeakHeatingLoadPerArea", NickName = "PeakHeatingLoadPerArea", Description = "Peak Heating Load Per Area [W/m2]", Access = GH_ParamAccess.item }, ParamVisibility.Binding));
+                result.Add(new GH_SAMParam(new global::Grasshopper.Kernel.Parameters.Param_Number() { Name = "PeakHeatingLoadPerVolume", NickName = "PeakHeatingLoadPerVolume", Description = "Peak Heating Load Per Volume [W/m3]", Access = GH_ParamAccess.item }, ParamVisibility.Binding));
                 result.Add(new GH_SAMParam(new global::Grasshopper.Kernel.Parameters.Param_Integer() { Name = "PeakHeatingHour", NickName = "PeakHeatingHour", Description = "Peak Heating Hour [0-8759]", Access = GH_ParamAccess.item }, ParamVisibility.Binding));
                 result.Add(new GH_SAMParam(new global::Grasshopper.Kernel.Parameters.Param_Number() { Name = "ConsumptionCooling", NickName = "ConsumptionCooling", Description = "Consumption Cooling [kWh]", Access = GH_ParamAccess.item }, ParamVisibility.Binding));
                 result.Add(new GH_SAMParam(new global::Grasshopper.Kernel.Parameters.Param_Number() { Name = "ConsumptionCoolingPerArea", NickName = "ConsumptionCoolingPerArea", Description = "Consumption Cooling Per Area [kWh/m2]", Access = GH_ParamAccess.item }, ParamVisibility.Binding));
                 result.Add(new GH_SAMParam(new global::Grasshopper.Kernel.Parameters.Param_Number() { Name = "ConsumptionCoolingPerVolume", NickName = "ConsumptionCoolingPerVolume", Description = "Consumption Cooling Per Volume [kWh/m3]", Access = GH_ParamAccess.item }, ParamVisibility.Binding));
                 result.Add(new GH_SAMParam(new global::Grasshopper.Kernel.Parameters.Param_Number() { Name = "PeakCoolingLoad", NickName = "PeakCoolingLoad", Description = "Peak Cooling Load [kW]", Access = GH_ParamAccess.item }, ParamVisibility.Binding));
-                result.Add(new GH_SAMParam(new global::Grasshopper.Kernel.Parameters.Param_Number() { Name = "PeakCoolingLoadPerArea", NickName = "PeakCoolingLoadPerArea", Description = "Peak Cooling Load Per Area [kWh/m2]", Access = GH_ParamAccess.item }, ParamVisibility.Binding));
-                result.Add(new GH_SAMParam(new global::Grasshopper.Kernel.Parameters.Param_Number() { Name = "PeakCoolingLoadPerVolume", NickName = "PeakCoolingLoadPerVolume", Description = "Peak Cooling Load Per Volume [kWh/m3]", Access = GH_ParamAccess.item }, ParamVisibility.Binding));
+                result.Add(new GH_SAMParam(new global::Grasshopper.Kernel.Parameters.Param_Number() { Name = "PeakCoolingLoadPerArea", NickName = "PeakCoolingLoadPerArea", Description = "Peak Cooling Load Per Area [W/m2]", Access = GH_ParamAccess.item }, ParamVisibility.Binding));
+                result.Add(new GH_SAMParam(new global::Grasshopper.Kernel.Parameters.Param_Number() { Name = "PeakCoolingLoadPerVolume", NickName = "PeakCoolingLoadPerVolume", Description = "Peak Cooling Load Per Volume [W/m3]", Access = GH_ParamAccess.item }, ParamVisibility.Binding));
                 result.Add(new GH_SAMParam(new global::Grasshopper.Kernel.Parameters.Param_Integer() { Name = "PeakCoolingHour", NickName = "PeakCoolingHour", Description = "Peak Cooling Hour [0-8759]", Access = GH_ParamAccess.item }, ParamVisibility.Binding));
                 result.Add(new GH_SAMParam(new global::Grasshopper.Kernel.Parameters.Param_Integer() { Name = "UnmetHours", NickName = "UnmetHours", Description = "Unmet Hours [0-8759]", Access = GH_ParamAccess.item }, ParamVisibility.Binding));
                 result.Add(new GH_SAMParam(new global::Grasshopper.Kernel.Parameters.Param_Integer() { Name = "UnmetHoursHeating", NickName = "UnmetHoursHeating", Description = "Unmet Cooling Hours [0-8759]", Access = GH_ParamAccess.item }, ParamVisibility.Binding));
@@ -229,69 +229,30 @@ namespace SAM.Analytical.Grasshopper.Tas
                 AnalyticalModelSimulationResult analyticalModelSimulationResult = Analytical.Tas.Convert.ToSAM_AnalyticalModelSimulationResult(path_TSD, analyticalModel);
                 adjacencyCluster.AddObject(analyticalModelSimulationResult);
 
-                consumptionHeating = analyticalModelSimulationResult.GetValue<double>(AnalyticalModelSimulationResultParameter.ConsumptionHeating) / 1000;
-                peakHeatingLoad = analyticalModelSimulationResult.GetValue<double>(AnalyticalModelSimulationResultParameter.PeakHeatingLoad) / 1000;
-                peakHeatingHour = analyticalModelSimulationResult.GetValue<int>(AnalyticalModelSimulationResultParameter.PeakHeatingHour);
-
-                consumptionCooling = analyticalModelSimulationResult.GetValue<double>(AnalyticalModelSimulationResultParameter.ConsumptionCooling) / 1000;
-                peakCoolingLoad = analyticalModelSimulationResult.GetValue<double>(AnalyticalModelSimulationResultParameter.PeakCoolingLoad) / 1000;
-                peakCoolingHour = analyticalModelSimulationResult.GetValue<int>(AnalyticalModelSimulationResultParameter.PeakCoolingHour);
-
-                double volume = analyticalModelSimulationResult.GetValue<double>(AnalyticalModelSimulationResultParameter.Volume);
-                if(!double.IsNaN(volume))
+                // Consumption in kWh and peak loads in kW whichever units the result was written in: SAM's units query
+                // converts a result written before the units correction (Wh, W) exactly once, so nothing here divides
+                // by 1000. Per area and per volume: kWh/m2, kWh/m3, W/m2, W/m3.
+                BuildingResults buildingResults = new BuildingResults(analyticalModelSimulationResult);
+                if (!buildingResults.UnitsKnown)
                 {
-                    if(!double.IsNaN(consumptionHeating))
-                    {
-                        consumptionHeatingPerVolume = volume == 0 ? 0 : consumptionHeating / volume;
-                        consumptionHeatingPerVolume = Core.Query.Round(consumptionHeatingPerVolume, 0.01);
-                    }
-
-                    if(!double.IsNaN(peakHeatingLoad))
-                    {
-                        peakHeatingLoadPerVolume = volume == 0 ? 0 : peakHeatingLoad / volume * 1000;
-                        peakHeatingLoadPerVolume = Core.Query.Round(peakHeatingLoadPerVolume, 0.01);
-                    }
-
-                    if (!double.IsNaN(consumptionCooling))
-                    {
-                        consumptionCoolingPerVolume = volume == 0 ? 0 : consumptionCooling / volume;
-                        consumptionCoolingPerVolume = Core.Query.Round(consumptionCoolingPerVolume, 0.01);
-                    }
-
-                    if (!double.IsNaN(peakCoolingLoad))
-                    {
-                        peakCoolingLoadPerVolume = volume == 0 ? 0 : peakCoolingLoad / volume * 1000;
-                        peakCoolingLoadPerVolume = Core.Query.Round(peakCoolingLoadPerVolume, 0.01);
-                    }
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, string.Format("The units of the building result are not known ({0}): consumption and peak loads are not output.", buildingResults.ResultUnitsState));
                 }
 
-                double floorArea = analyticalModelSimulationResult.GetValue<double>(AnalyticalModelSimulationResultParameter.FloorArea);
-                if (!double.IsNaN(floorArea))
-                {
-                    if (!double.IsNaN(consumptionHeating))
-                    {
-                        consumptionHeatingPerArea = floorArea == 0 ? 0 : consumptionHeating / floorArea;
-                        consumptionHeatingPerArea = Core.Query.Round(consumptionHeatingPerArea, 0.01);
-                    }
+                consumptionHeating = buildingResults.ConsumptionHeating;
+                consumptionHeatingPerArea = buildingResults.ConsumptionHeatingPerArea;
+                consumptionHeatingPerVolume = buildingResults.ConsumptionHeatingPerVolume;
+                peakHeatingLoad = buildingResults.PeakHeatingLoad;
+                peakHeatingLoadPerArea = buildingResults.PeakHeatingLoadPerArea;
+                peakHeatingLoadPerVolume = buildingResults.PeakHeatingLoadPerVolume;
+                peakHeatingHour = buildingResults.PeakHeatingHour;
 
-                    if (!double.IsNaN(peakHeatingLoad))
-                    {
-                        peakHeatingLoadPerArea = floorArea == 0 ? 0 : peakHeatingLoad / floorArea * 1000;
-                        peakHeatingLoadPerArea = Core.Query.Round(peakHeatingLoadPerArea, 0.01);
-                    }
-
-                    if (!double.IsNaN(consumptionCooling))
-                    {
-                        consumptionCoolingPerArea = floorArea == 0 ? 0 : consumptionCooling / floorArea;
-                        consumptionCoolingPerArea = Core.Query.Round(consumptionCoolingPerArea, 0.01);
-                    }
-
-                    if (!double.IsNaN(peakCoolingLoad))
-                    {
-                        peakCoolingLoadPerArea = floorArea == 0 ? 0 : peakCoolingLoad / floorArea * 1000;
-                        peakCoolingLoadPerArea = Core.Query.Round(peakCoolingLoadPerArea, 0.01);
-                    }
-                }
+                consumptionCooling = buildingResults.ConsumptionCooling;
+                consumptionCoolingPerArea = buildingResults.ConsumptionCoolingPerArea;
+                consumptionCoolingPerVolume = buildingResults.ConsumptionCoolingPerVolume;
+                peakCoolingLoad = buildingResults.PeakCoolingLoad;
+                peakCoolingLoadPerArea = buildingResults.PeakCoolingLoadPerArea;
+                peakCoolingLoadPerVolume = buildingResults.PeakCoolingLoadPerVolume;
+                peakCoolingHour = buildingResults.PeakCoolingHour;
 
                 results.Add(analyticalModelSimulationResult);
 
